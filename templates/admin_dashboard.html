@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard Amministratore{% endblock %}
+
+{% block content %}
+<h1>Dashboard Amministratore</h1>
+
+<!-- Sezione principale della dashboard -->
+<div class="admin-actions">
+    <h2>Funzioni Amministrative</h2>
+
+    <!-- Link al Calendario Prenotazioni -->
+    <a href="{{ url_for('all_bookings_calendar', year=now.year, month=now.month) }}" class="btn btn-primary">
+        Visualizza Calendario Prenotazioni
+    </a>
+
+    <!-- Link per Gestione Costi del Calendario -->
+    <a href="{{ url_for('admin_calendar', year=now.year, month=now.month) }}" class="btn btn-secondary">
+        Gestisci Costi del Calendario
+    </a>
+</div>
+{% endblock %}

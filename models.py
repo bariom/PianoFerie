@@ -1,19 +1,18 @@
 from extensions import db
 from datetime import datetime
+from flask_login import UserMixin
 
-class User(db.Model):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(255), nullable=False)
-    credits = db.Column(db.Integer, default=100)  # Default iniziale per i crediti
+    name = db.Column(db.String(128), nullable=False)
+    email = db.Column(db.String(128), unique=True, nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
-
-    # Nuovi campi
-    annual_holiday_days = db.Column(db.Integer, default=33)  # Giorni di ferie di diritto annuale
-    remaining_holiday_days = db.Column(db.Integer, default=33)  # Giorni di ferie residui
+    credits = db.Column(db.Integer, default=410)
+    annual_holiday_days = db.Column(db.Integer, default=33)
+    remaining_holiday_days = db.Column(db.Integer, default=33)
 
 
 class Holiday(db.Model):

@@ -1,36 +1,36 @@
 from flask import Flask, render_template, redirect, url_for, flash, session, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
-from functools import wraps
-from calendar import monthrange, day_name
+from calendar import monthrange, day_name, Calendar
 from datetime import date, timedelta, datetime
-from config import Config  # Importa la configurazione
-
+from config import Config
 from extensions import db, migrate
 
 # Configurazione Flask
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://planner_user:baro0014!@gvalug04/planner'
-app.config['SECRET_KEY'] = 'your_secret_key'  # Cambia con una chiave sicura
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config.from_object(Config)
 
-# Inizializza db e migrate
+# Inizializza database e migrazioni
 db.init_app(app)
 migrate.init_app(app, db)
 
-# Importa i modelli DOPO l'inizializzazione di db
+# Inizializza Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message = "Devi effettuare il login per accedere."
+login_manager.login_message_category = "warning"
+
+# Modelli
 from models import User, Holiday, Booking
 
-# Decoratore per proteggere le route
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('Devi effettuare il login per accedere a questa pagina.', 'warning')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
+
+# Caricamento utente per Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 
 # Route Homepage
@@ -76,9 +76,9 @@ def login():
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash, password):
-            session['user_id'] = user.id
+            login_user(user)
             flash('Login effettuato con successo!', 'success')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('admin_dashboard') if user.is_admin else url_for('dashboard'))
         else:
             flash('Email o password errati.', 'danger')
 
@@ -87,21 +87,19 @@ def login():
 
 # Route Logout
 @app.route('/logout')
+@login_required
 def logout():
-    session.pop('user_id', None)
+    logout_user()
     flash('Logout effettuato con successo.', 'info')
     return redirect(url_for('login'))
 
 
-# Route Dashboard
+# Route Dashboard Utente
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Ottieni l'utente loggato
-    user = User.query.get(session['user_id'])
-
     # Ottieni le ferie prenotate dall'utente
-    bookings = Booking.query.filter_by(user_id=user.id).all()
+    bookings = Booking.query.filter_by(user_id=current_user.id).all()
 
     # Recupera le informazioni sulle date delle ferie prenotate
     booked_holidays = [
@@ -112,59 +110,52 @@ def dashboard():
         for booking in bookings
     ]
 
-    # Ottieni l'anno e il mese corrente per il link al calendario
+    # Ottieni l'anno e il mese corrente
     now = datetime.now()
 
     # Renderizza il template con i dati aggiornati
     return render_template(
         'dashboard.html',
-        user=user,
+        user=current_user,
         booked_holidays=booked_holidays,
         now=now
     )
 
 
-
-
-# Route Prenotazione Ferie
-@app.route('/book', methods=['POST'])
+# Route Dashboard Amministratore
+@app.route('/admin-dashboard')
 @login_required
-def book_holiday():
-    holiday_id = request.form.get('holiday_id')
-    user = User.query.get(session['user_id'])
-    holiday = Holiday.query.get(holiday_id)
+def admin_dashboard():
+    if not current_user.is_admin:
+        flash("Accesso non autorizzato.", "danger")
+        return redirect(url_for('dashboard'))
 
-    if user.credits >= holiday.cost:
-        user.credits -= holiday.cost
-        booking = Booking(user_id=user.id, holiday_id=holiday.id)
-        db.session.add(booking)
-        db.session.commit()
+    now = datetime.now()
+    return render_template('admin_dashboard.html', now=now)
 
-        flash('Ferie prenotate con successo!', 'success')
-    else:
-        flash('Crediti insufficienti.', 'danger')
 
-    return redirect(url_for('dashboard'))
-
+# Route Calendario Dipendente
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def employee_calendar_view(year, month):
-    from calendar import Calendar
+    user = current_user  # Usa l'utente loggato direttamente
+    cal = Calendar(firstweekday=0)  # Inizia con lunedì
+    month_days = cal.monthdayscalendar(year, month)  # Elenco delle settimane con i giorni
 
-    user = User.query.get(session['user_id'])
-    cal = Calendar(firstweekday=0)
-    month_days = cal.monthdayscalendar(year, month)
-
+    # Ottieni il primo e l'ultimo giorno del mese
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
+
+    # Ottieni le ferie dal database per il mese selezionato
     holidays = Holiday.query.filter(Holiday.date.between(first_day, last_day)).all()
     holiday_data = {holiday.date: holiday for holiday in holidays}
 
+    # Costruisci i dati del calendario
     calendar_data = []
     for week in month_days:
         week_data = []
         for day in week:
-            if day == 0:
+            if day == 0:  # Giorno vuoto nel calendario
                 week_data.append({'date': None, 'cost': None, 'is_booked': False})
             else:
                 current_date = date(year, month, day)
@@ -173,7 +164,7 @@ def employee_calendar_view(year, month):
                     cost = holiday.cost
                     holiday_id = holiday.id
                 else:
-                    cost = 10
+                    cost = 10  # Costo di default
                     holiday_id = None
 
                 week_data.append({
@@ -183,8 +174,8 @@ def employee_calendar_view(year, month):
                 })
         calendar_data.append(week_data)
 
-    warnings = []  # Lista per i messaggi di warning
-
+    # Gestione della prenotazione
+    warnings = []
     if request.method == 'POST':
         selected_dates = request.form.getlist('selected_dates')
         if not selected_dates:
@@ -230,17 +221,12 @@ def employee_calendar_view(year, month):
 
     return render_template('employee_calendar.html', calendar_data=calendar_data, year=year, month=month, warnings=warnings)
 
-
-
-
-
+# Route Calendario Amministratore
 @app.route('/admin/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def admin_calendar(year, month):
-    user = User.query.get(session['user_id'])
-
     # Verifica che l'utente sia amministratore
-    if not user.is_admin:
+    if not current_user.is_authenticated or not current_user.is_admin:
         flash('Accesso negato. Solo gli amministratori possono accedere a questa pagina.', 'danger')
         return redirect(url_for('dashboard'))
 
@@ -282,6 +268,68 @@ def admin_calendar(year, month):
         return redirect(url_for('admin_calendar', year=year, month=month))
 
     return render_template('admin_calendar.html', calendar_days=calendar_days, year=year, month=month)
+
+
+@app.route('/all-bookings-calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
+@login_required
+def all_bookings_calendar(year, month):
+    from calendar import Calendar
+
+    # Verifica che l'utente sia amministratore
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash("Accesso non autorizzato.", "danger")
+        return redirect(url_for('dashboard'))
+
+    cal = Calendar(firstweekday=0)
+    month_days = cal.monthdayscalendar(year, month)
+
+    first_day = date(year, month, 1)
+    last_day = date(year, month, monthrange(year, month)[1])
+
+    # Ottieni utenti selezionati (via POST o mostra tutti di default)
+    selected_users = request.form.getlist('selected_users') if request.method == 'POST' else []
+    if not selected_users:
+        all_users = User.query.all()
+        selected_users = [str(user.id) for user in all_users]
+
+    # Ottieni prenotazioni in base agli utenti selezionati
+    bookings = Booking.query.join(User).join(Holiday).filter(
+        Booking.user_id.in_(selected_users),
+        Holiday.date.between(first_day, last_day)
+    ).all()
+
+    # Organizza le prenotazioni per data
+    bookings_by_date = {}
+    for booking in bookings:
+        holiday = Holiday.query.get(booking.holiday_id)
+        if holiday.date not in bookings_by_date:
+            bookings_by_date[holiday.date] = []
+        bookings_by_date[holiday.date].append(booking.user_id)
+
+    # Costruisci i dati del calendario
+    calendar_data = []
+    for week in month_days:
+        week_data = []
+        for day in week:
+            if day == 0:
+                week_data.append({'date': None, 'bookings': []})
+            else:
+                current_date = date(year, month, day)
+                bookings = bookings_by_date.get(current_date, [])
+                week_data.append({'date': current_date, 'bookings': bookings})
+        calendar_data.append(week_data)
+
+    # Ottieni tutti gli utenti per i filtri
+    all_users = User.query.all()
+
+    return render_template(
+        'all_bookings_calendar.html',
+        calendar_data=calendar_data,
+        all_users=all_users,
+        selected_users=[int(uid) for uid in selected_users],
+        year=year,
+        month=month
+    )
 
 
 # Avvio dell'applicazione

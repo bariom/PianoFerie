@@ -10,13 +10,19 @@
     <header>
         <nav>
             <a href="{{ url_for('index') }}">Home</a>
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            {% if 'user_id' in session %}
+
+            {% if current_user.is_authenticated %}
+                {% if current_user.is_admin %}
+                    <a href="{{ url_for('admin_dashboard') }}">Dashboard Admin</a>
+                {% else %}
+                    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                {% endif %}
                 <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}
                 <a href="{{ url_for('login') }}">Login</a>
             {% endif %}
         </nav>
+
     </header>
 
     <main class="container">
