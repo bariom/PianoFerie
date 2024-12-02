@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<h1>Benvenuto, {{ user.name }}</h1>
+
+<!-- Saldo crediti e giorni residui -->
+<div class="info-section">
+    <h2>Saldo</h2>
+    <p>Crediti disponibili: <strong>{{ user.credits }}</strong></p>
+    <p>Giorni di ferie residui: <strong>{{ user.remaining_holiday_days }}</strong></p>
+</div>
+
+<!-- Ferie prenotate -->
+<h2>Le tue Ferie Prenotate</h2>
+{% if booked_holidays %}
+    <table>
+        <thead>
+            <tr>
+                <th>Data</th>
+                <th>Costo (crediti)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for holiday in booked_holidays %}
+                <tr>
+                    <td>{{ holiday.date }}</td>
+                    <td>{{ holiday.cost }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% else %}
+    <p>Non hai ancora prenotato ferie.</p>
+{% endif %}
+
+<!-- Bottone per accedere alla prenotazione delle ferie -->
+<div style="margin-top: 20px;">
+    <a href="{{ url_for('employee_calendar_view', year=now.year, month=now.month) }}" class="btn btn-primary">
+        Prenota Ferie
+    </a>
+</div>
+{% endblock %}

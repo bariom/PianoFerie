@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Prenota Ferie{% endblock %}
+
+{% block content %}
+<h1>Calendario - {{ year }}/{{ month }}</h1>
+
+<!-- Navigazione tra i mesi -->
+<nav>
+    <a href="{{ url_for('employee_calendar_view', year=year if month > 1 else year - 1, month=month - 1 if month > 1 else 12) }}">
+        &larr; Mese Precedente
+    </a>
+    <a href="{{ url_for('employee_calendar_view', year=year if month < 12 else year + 1, month=month + 1 if month < 12 else 1) }}">
+        Mese Successivo &rarr;
+    </a>
+</nav>
+
+<!-- Messaggi di warning -->
+{% if warnings %}
+    <div class="alert alert-warning warning-box">
+        <strong>Attenzione:</strong>
+        <ul>
+            {% for warning in warnings %}
+                <li>{{ warning }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
+
+<!-- Calendario -->
+<form method="POST">
+    <table class="calendar-table">
+        <thead>
+            <tr>
+                <th>Lunedì</th>
+                <th>Martedì</th>
+                <th>Mercoledì</th>
+                <th>Giovedì</th>
+                <th>Venerdì</th>
+                <th>Sabato</th>
+                <th>Domenica</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for week in calendar_data %}
+                <tr>
+                    {% for day in week %}
+                        {% if day.date %}
+                            <td class="{% if day.is_booked %}booked{% endif %}">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="selected_dates"
+                                        value="{{ day.date }}"
+                                        {% if day.is_booked %}disabled{% endif %}>
+                                    <span class="date">{{ day.date.day }}</span>
+                                </label>
+                                <div class="cost">{{ day.cost }} crediti</div>
+                            </td>
+                        {% else %}
+                            <td class="empty"></td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="submit-container">
+        <button type="submit" class="btn btn-primary">Prenota</button>
+    </div>
+</form>
+{% endblock %}
