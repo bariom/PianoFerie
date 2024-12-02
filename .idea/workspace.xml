@@ -4,10 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="70a3ad16-cff8-479d-8978-bb2a9e878d5b" name="Changes" comment="Versione con le funzioni di base.">
+    <list default="true" id="70a3ad16-cff8-479d-8978-bb2a9e878d5b" name="Changes" comment="In validate_bookings.html si vede il nome utente.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/validate_bookings.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/validate_bookings.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/static/styles.css" beforeDir="false" afterPath="$PROJECT_DIR$/static/styles.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -188,14 +188,23 @@
       <option name="project" value="LOCAL" />
       <updated>1733148528945</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="In validate_bookings.html si vede il nome utente.">
+      <option name="closed" value="true" />
+      <created>1733149153930</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1733149153930</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
     <MESSAGE value="Initial commit" />
     <MESSAGE value="Versione con le funzioni di base." />
-    <option name="LAST_COMMIT_MESSAGE" value="Versione con le funzioni di base." />
+    <MESSAGE value="In validate_bookings.html si vede il nome utente." />
+    <option name="LAST_COMMIT_MESSAGE" value="In validate_bookings.html si vede il nome utente." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>

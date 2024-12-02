@@ -135,6 +135,24 @@ button:hover {
     background-color: #5a6268;
 }
 
+.btn-logout {
+    background-color: #f8f9fa; /* Grigio chiaro */
+    color: #6c757d;           /* Grigio scuro */
+    border: 1px solid #ddd;   /* Bordo leggero */
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 0.9rem;        /* Riduci leggermente il testo */
+    cursor: pointer;
+}
+
+.btn-logout:hover {
+    background-color: #e2e6ea; /* Grigio leggermente più scuro per hover */
+    color: #495057;           /* Grigio scuro per hover */
+}
+
+
+
 /* ==================================================
    CONTENITORI
    ================================================== */
