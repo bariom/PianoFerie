@@ -98,28 +98,37 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    # Ottieni le ferie prenotate dall'utente
-    bookings = Booking.query.filter_by(user_id=current_user.id).all()
+    user = current_user
 
-    # Recupera le informazioni sulle date delle ferie prenotate
+    # Ottieni tutte le prenotazioni dell'utente
+    bookings = Booking.query.filter_by(user_id=user.id).all()
+
+    # Prepara i dati per le prenotazioni
     booked_holidays = [
         {
+            'id': booking.id,
             'date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'cost': Holiday.query.get(booking.holiday_id).cost
+            'cost': Holiday.query.get(booking.holiday_id).cost,
+            'is_validated': booking.is_validated
         }
         for booking in bookings
     ]
 
-    # Ottieni l'anno e il mese corrente
+    # Ottieni l'orario corrente per costruire l'URL
     now = datetime.now()
 
     # Renderizza il template con i dati aggiornati
     return render_template(
         'dashboard.html',
-        user=current_user,
+        user=user,
         booked_holidays=booked_holidays,
         now=now
     )
+
+
+
+
+
 
 
 # Route Dashboard Amministratore
@@ -331,6 +340,68 @@ def all_bookings_calendar(year, month):
         month=month
     )
 
+
+@app.route('/cancel-booking', methods=['POST'])
+@login_required
+def cancel_booking():
+    booking_id = request.form.get('booking_id')
+
+    if not booking_id:
+        flash("ID prenotazione non valido.", "danger")
+        return redirect(url_for('dashboard'))
+
+    booking = Booking.query.get(booking_id)
+
+    # Verifica che il booking appartenga all'utente corrente
+    if not booking or booking.user_id != current_user.id:
+        flash("Prenotazione non trovata o non autorizzata.", "danger")
+        return redirect(url_for('dashboard'))
+
+    # Ottieni l'utente e il giorno di ferie associati
+    user = User.query.get(current_user.id)
+    holiday = Holiday.query.get(booking.holiday_id)
+
+    if holiday:
+        # Restituisci i crediti e i giorni ferie
+        user.credits += holiday.cost
+        user.remaining_holiday_days += 1
+
+        # Rimuovi la prenotazione
+        db.session.delete(booking)
+        db.session.commit()
+
+        flash("Prenotazione annullata con successo. Crediti e giorni ferie aggiornati.", "success")
+    else:
+        flash("Errore durante l'annullamento della prenotazione.", "danger")
+
+    return redirect(url_for('dashboard'))
+
+
+
+
+
+@app.route('/validate-bookings', methods=['GET', 'POST'])
+@login_required
+def validate_bookings():
+    # Verifica che l'utente sia un amministratore
+    if not current_user.is_admin:
+        flash("Accesso non autorizzato.", "danger")
+        return redirect(url_for('dashboard'))
+
+    if request.method == 'POST':
+        # Elabora le validazioni
+        validated_ids = request.form.getlist('booking_ids')
+        if validated_ids:
+            bookings = Booking.query.filter(Booking.id.in_(validated_ids)).all()
+            for booking in bookings:
+                booking.is_validated = True
+            db.session.commit()
+            flash(f"{len(validated_ids)} prenotazioni validate con successo!", "success")
+        return redirect(url_for('validate_bookings'))
+
+    # Recupera tutte le prenotazioni non validate
+    bookings = Booking.query.filter_by(is_validated=False).all()
+    return render_template('validate_bookings.html', bookings=bookings)
 
 # Avvio dell'applicazione
 if __name__ == '__main__':

@@ -13,7 +13,7 @@
     <a href="{{ url_for('all_bookings_calendar', year=now.year, month=now.month) }}" class="btn btn-primary">
         Visualizza Calendario Prenotazioni
     </a>
-
+    <a href="{{ url_for('validate_bookings') }}" class="btn btn-primary">Gestisci Prenotazioni</a>
     <!-- Link per Gestione Costi del Calendario -->
     <a href="{{ url_for('admin_calendar', year=now.year, month=now.month) }}" class="btn btn-secondary">
         Gestisci Costi del Calendario

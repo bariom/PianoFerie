@@ -4,7 +4,6 @@ from flask_login import UserMixin
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
-
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(128), unique=True, nullable=False)
@@ -17,17 +16,22 @@ class User(db.Model, UserMixin):
 
 class Holiday(db.Model):
     __tablename__ = 'holidays'
-
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.Date, nullable=False, unique=True)
     cost = db.Column(db.Integer, nullable=False)
 
 class Booking(db.Model):
-    __tablename__ = 'bookings'
-
+    __tablename__ = 'booking'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    holiday_id = db.Column(db.Integer, db.ForeignKey('holidays.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Nota: 'users.id' deve corrispondere al nome della tabella e della colonna
+    holiday_id = db.Column(db.Integer, db.ForeignKey('holidays.id'), nullable=False)  # Nota: 'holidays.id' deve corrispondere al nome della tabella e della colonna
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_validated = db.Column(db.Boolean, default=False)
+
+    # Relazioni
+    user = db.relationship('User', backref='bookings')
+    holiday = db.relationship('Holiday', backref='bookings')
+
+
 
 

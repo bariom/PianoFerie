@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Validazione Prenotazioni{% endblock %}
+
+{% block content %}
+<h1>Validazione Prenotazioni</h1>
+
+{% if bookings %}
+<form method="POST">
+    <table>
+        <thead>
+            <tr>
+                <th>Seleziona</th>
+                <th>Utente</th>
+                <th>Data</th>
+                <th>Ore create</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td><input type="checkbox" name="booking_ids" value="{{ booking.id }}"></td>
+                <td>{{ booking.user_id }}</td>
+                <td>{{ booking.holiday_id }}</td>
+                <td>{{ booking.created_at }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <button type="submit">Valida Selezionate</button>
+</form>
+{% else %}
+<p>Non ci sono prenotazioni in attesa di validazione.</p>
+{% endif %}
+{% endblock %}

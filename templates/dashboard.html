@@ -1,44 +1,50 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Dashboard Utente{% endblock %}
 
 {% block content %}
-<h1>Benvenuto, {{ user.name }}</h1>
+<div class="container">
+    <h1>Benvenuto, {{ user.name }}!</h1>
 
-<!-- Saldo crediti e giorni residui -->
-<div class="info-section">
-    <h2>Saldo</h2>
-    <p>Crediti disponibili: <strong>{{ user.credits }}</strong></p>
-    <p>Giorni di ferie residui: <strong>{{ user.remaining_holiday_days }}</strong></p>
-</div>
+    <div class="credits-info">
+        <h2>Saldo Attuale</h2>
+        <p>Crediti disponibili: <strong>{{ user.credits }}</strong></p>
+        <p>Giorni di ferie residui: <strong>{{ user.remaining_holiday_days }}</strong></p>
+    </div>
 
-<!-- Ferie prenotate -->
-<h2>Le tue Ferie Prenotate</h2>
-{% if booked_holidays %}
-    <table>
-        <thead>
-            <tr>
-                <th>Data</th>
-                <th>Costo (crediti)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for holiday in booked_holidays %}
+    <h2>Ferie Prenotate</h2>
+    {% if booked_holidays %}
+        <table class="table">
+            <thead>
                 <tr>
-                    <td>{{ holiday.date }}</td>
-                    <td>{{ holiday.cost }}</td>
+                    <th>Data</th>
+                    <th>Costo (crediti)</th>
+                    <th>Stato</th>
+                    <th>Azioni</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-{% else %}
-    <p>Non hai ancora prenotato ferie.</p>
-{% endif %}
+            </thead>
+            <tbody>
+                {% for booking in booked_holidays %}
+                    <tr>
+                        <td>{{ booking.date }}</td>
+                        <td>{{ booking.cost }}</td>
+                        <td>{{ 'Validata' if booking.is_validated else 'In attesa' }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('cancel_booking') }}">
+                                <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Annulla</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Non hai ferie prenotate al momento.</p>
+    {% endif %}
 
-<!-- Bottone per accedere alla prenotazione delle ferie -->
-<div style="margin-top: 20px;">
-    <a href="{{ url_for('employee_calendar_view', year=now.year, month=now.month) }}" class="btn btn-primary">
-        Prenota Ferie
-    </a>
+    <div class="actions">
+        <a href="{{ url_for('employee_calendar_view', year=now.year, month=now.month) }}" class="btn btn-primary">Prenota Ferie</a>
+    </div>
 </div>
 {% endblock %}
