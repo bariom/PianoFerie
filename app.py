@@ -383,25 +383,37 @@ def cancel_booking():
 @app.route('/validate-bookings', methods=['GET', 'POST'])
 @login_required
 def validate_bookings():
-    # Verifica che l'utente sia un amministratore
     if not current_user.is_admin:
         flash("Accesso non autorizzato.", "danger")
         return redirect(url_for('dashboard'))
 
+    # Ottenere tutte le prenotazioni non validate
+    bookings = Booking.query.filter_by(is_validated=False).all()
+
+    # Prepara i dati per il template
+    booking_data = [
+        {
+            'id': booking.id,
+            'user_name': User.query.get(booking.user_id).name,  # Ottieni il nome dell'utente
+            'holiday_date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
+            'holiday_cost': Holiday.query.get(booking.holiday_id).cost
+        }
+        for booking in bookings
+    ]
+
     if request.method == 'POST':
-        # Elabora le validazioni
-        validated_ids = request.form.getlist('booking_ids')
-        if validated_ids:
-            bookings = Booking.query.filter(Booking.id.in_(validated_ids)).all()
-            for booking in bookings:
+        validated_bookings = request.form.getlist('validate')
+        for booking_id in validated_bookings:
+            booking = Booking.query.get(booking_id)
+            if booking:
                 booking.is_validated = True
-            db.session.commit()
-            flash(f"{len(validated_ids)} prenotazioni validate con successo!", "success")
+                db.session.commit()
+
+        flash("Prenotazioni validate con successo!", "success")
         return redirect(url_for('validate_bookings'))
 
-    # Recupera tutte le prenotazioni non validate
-    bookings = Booking.query.filter_by(is_validated=False).all()
-    return render_template('validate_bookings.html', bookings=bookings)
+    return render_template('validate_bookings.html', bookings=booking_data)
+
 
 # Avvio dell'applicazione
 if __name__ == '__main__':
