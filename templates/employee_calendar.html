@@ -27,7 +27,6 @@
     </div>
 {% endif %}
 
-
 <!-- Calendario -->
 <form method="POST">
     <table class="calendar-table">
@@ -47,16 +46,62 @@
                 <tr>
                     {% for day in week %}
                         {% if day.date %}
-                            <td class="{% if day.is_booked %}booked{% endif %}">
+                            <td class="
+                                {% if day.full_day_booking and day.full_day_booking.is_validated %}validated
+                                {% elif day.full_day_booking %}pending
+                                {% elif day.half_day_bookings %}pending{% endif %}">
                                 <label>
                                     <input
                                         type="checkbox"
                                         name="selected_dates"
                                         value="{{ day.date }}"
-                                        {% if day.is_booked %}disabled{% endif %}>
+                                        {% if day.full_day_booking or day.half_day_bookings %}disabled{% endif %}>
                                     <span class="date">{{ day.date.day }}</span>
                                 </label>
-                                <div class="cost">{{ day.cost }} crediti</div>
+                                <div class="cost">
+                                    <span class="credits">{{ day.cost }}</span> crediti
+                                </div>
+
+                                <!-- Prenotazioni Esistenti -->
+                                {% if day.full_day_booking %}
+                                    <div class="booked-day">
+                                        <span class="{{ 'validated' if day.full_day_booking.is_validated else 'pending' }}">
+                                            Giornata Intera ({{ 'Validata' if day.full_day_booking.is_validated else 'In attesa' }})
+                                        </span>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Mezze Giornate Prenotate -->
+                                {% if day.half_day_bookings %}
+                                    <div class="half-day-bookings">
+                                        {% for booking in day.half_day_bookings %}
+                                            <span class="{{ 'validated' if booking.is_validated else 'pending' }}">
+                                                {{ 'AM' if booking.session == 'morning' else 'PM' }}
+                                                ({{ 'Validata' if booking.is_validated else 'In attesa' }})
+                                            </span>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+
+                                <!-- Opzioni per prenotare mezze giornate -->
+                                {% if not day.full_day_booking and not day.half_day_bookings %}
+                                    <div class="half-day-options">
+                                        <label class="half-day-label">
+                                            <input
+                                                type="radio"
+                                                name="session_{{ day.date }}"
+                                                value="morning">
+                                            AM
+                                        </label>
+                                        <label class="half-day-label">
+                                            <input
+                                                type="radio"
+                                                name="session_{{ day.date }}"
+                                                value="afternoon">
+                                            PM
+                                        </label>
+                                    </div>
+                                {% endif %}
                             </td>
                         {% else %}
                             <td class="empty"></td>
@@ -71,4 +116,5 @@
         <button type="submit" class="btn btn-primary">Prenota</button>
     </div>
 </form>
+
 {% endblock %}

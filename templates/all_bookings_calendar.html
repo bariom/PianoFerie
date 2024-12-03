@@ -52,8 +52,11 @@
                             <div class="date">{{ day.date.day }}</div>
                             {% if day.bookings %}
                                 <ul class="booking-list">
-                                    {% for user_id in day.bookings %}
-                                        <li class="booking-user user-{{ user_id }}">{{ all_users|selectattr('id', 'equalto', user_id)|map(attribute='name')|join(', ') }}</li>
+                                    {% for booking in day.bookings %}
+                                        <li class="booking-user
+                                                   {% if booking.is_validated %}validated{% else %}not-validated{% endif %}">
+                                            {{ all_users|selectattr('id', 'equalto', booking.user_id)|map(attribute='name')|join(', ') }}
+                                        </li>
                                     {% endfor %}
                                 </ul>
                             {% endif %}

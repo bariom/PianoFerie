@@ -7,6 +7,7 @@ from calendar import monthrange, day_name, Calendar
 from datetime import date, timedelta, datetime
 from config import Config
 from extensions import db, migrate
+from sqlalchemy.orm import joinedload
 
 # Configurazione Flask
 app = Flask(__name__)
@@ -108,22 +109,21 @@ def dashboard():
         {
             'id': booking.id,
             'date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'cost': Holiday.query.get(booking.holiday_id).cost,
+            'cost': Holiday.query.get(booking.holiday_id).cost / 2 if booking.is_half_day else Holiday.query.get(booking.holiday_id).cost,
+            'session': booking.session if booking.is_half_day else None,
             'is_validated': booking.is_validated
         }
         for booking in bookings
     ]
 
-    # Ottieni l'orario corrente per costruire l'URL
     now = datetime.now()
-
-    # Renderizza il template con i dati aggiornati
     return render_template(
         'dashboard.html',
         user=user,
         booked_holidays=booked_holidays,
         now=now
     )
+
 
 
 
@@ -147,88 +147,124 @@ def admin_dashboard():
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def employee_calendar_view(year, month):
-    user = current_user  # Usa l'utente loggato direttamente
-    cal = Calendar(firstweekday=0)  # Inizia con lunedì
-    month_days = cal.monthdayscalendar(year, month)  # Elenco delle settimane con i giorni
+    user = current_user
+    cal = Calendar(firstweekday=0)
+    month_days = cal.monthdayscalendar(year, month)
 
-    # Ottieni il primo e l'ultimo giorno del mese
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
 
-    # Ottieni le ferie dal database per il mese selezionato
     holidays = Holiday.query.filter(Holiday.date.between(first_day, last_day)).all()
     holiday_data = {holiday.date: holiday for holiday in holidays}
 
-    # Costruisci i dati del calendario
     calendar_data = []
     for week in month_days:
         week_data = []
         for day in week:
-            if day == 0:  # Giorno vuoto nel calendario
-                week_data.append({'date': None, 'cost': None, 'is_booked': False})
+            if day == 0:
+                week_data.append({'date': None, 'cost': None, 'bookings': []})
             else:
                 current_date = date(year, month, day)
                 holiday = holiday_data.get(current_date)
-                if holiday:
-                    cost = holiday.cost
-                    holiday_id = holiday.id
-                else:
-                    cost = 10  # Costo di default
-                    holiday_id = None
+                cost = holiday.cost if holiday else 10
+                holiday_id = holiday.id if holiday else None
+
+                bookings = Booking.query.filter_by(user_id=user.id, holiday_id=holiday_id).all()
+
+                full_day_booking = next(
+                    (b for b in bookings if not b.is_half_day), None
+                )
+                half_day_bookings = [
+                    {
+                        'session': b.session,
+                        'is_validated': b.is_validated
+                    }
+                    for b in bookings if b.is_half_day
+                ]
 
                 week_data.append({
                     'date': current_date,
                     'cost': cost,
-                    'is_booked': Booking.query.filter_by(user_id=user.id, holiday_id=holiday_id).first() is not None
+                    'full_day_booking': full_day_booking,
+                    'half_day_bookings': half_day_bookings
                 })
         calendar_data.append(week_data)
 
-    # Gestione della prenotazione
     warnings = []
     if request.method == 'POST':
         selected_dates = request.form.getlist('selected_dates')
-        if not selected_dates:
-            warnings.append('Seleziona almeno un giorno per prenotare.')
-            return render_template('employee_calendar.html', calendar_data=calendar_data, year=year, month=month, warnings=warnings)
-
-        total_cost = 0
-        required_days = len(selected_dates)
         new_bookings = []
-
         for date_str in selected_dates:
             holiday_date = date.fromisoformat(date_str)
             holiday = holiday_data.get(holiday_date)
+
             if not holiday:
                 warnings.append(f"Nessuna festività trovata per la data {holiday_date}.")
-                return render_template('employee_calendar.html', calendar_data=calendar_data, year=year, month=month, warnings=warnings)
+                continue
 
-            total_cost += holiday.cost
-            new_bookings.append(holiday)
+            session = request.form.get(f'session_{holiday_date}')
+            is_half_day = session in ['morning', 'afternoon']
 
-        # Verifica crediti
+            existing_full_booking = Booking.query.filter_by(
+                user_id=user.id, holiday_id=holiday.id, is_half_day=False
+            ).first()
+            existing_half_day_booking = Booking.query.filter_by(
+                user_id=user.id, holiday_id=holiday.id, is_half_day=True, session=session
+            ).first()
+
+            if is_half_day:
+                if existing_full_booking:
+                    warnings.append(f"Il giorno {holiday_date} è già prenotato come giornata intera.")
+                    continue
+                if existing_half_day_booking:
+                    warnings.append(f"La sessione {session} del giorno {holiday_date} è già prenotata.")
+                    continue
+            else:
+                if existing_full_booking or existing_half_day_booking:
+                    warnings.append(f"Il giorno {holiday_date} ha già una prenotazione (mezza o intera giornata).")
+                    continue
+
+            new_booking = Booking(
+                user_id=user.id,
+                holiday_id=holiday.id,
+                holiday=holiday,
+                is_half_day=is_half_day,
+                session=session if is_half_day else None
+            )
+            new_bookings.append(new_booking)
+
+        total_cost = sum(
+            booking.holiday.cost / 2 if booking.is_half_day else booking.holiday.cost
+            for booking in new_bookings
+        )
+        required_days = sum(
+            0.5 if booking.is_half_day else 1
+            for booking in new_bookings
+        )
+
         if total_cost > user.credits:
-            warnings.append(f"Crediti insufficienti. Hai {user.credits} crediti disponibili, ma ne servono {total_cost}.")
-        # Verifica giorni di ferie residui
-        if required_days > user.remaining_holiday_days:
-            warnings.append(f"Giorni di ferie residui insufficienti. Hai {user.remaining_holiday_days} giorni, ma ne servono {required_days}.")
-
-        # Se ci sono warning, interrompi la prenotazione
-        if warnings:
+            warnings.append(f"Crediti insufficienti. Hai {user.credits} crediti disponibili.")
             return render_template('employee_calendar.html', calendar_data=calendar_data, year=year, month=month, warnings=warnings)
 
-        # Aggiorna crediti e giorni residui
+        if required_days > user.remaining_holiday_days:
+            warnings.append(f"Giorni di ferie insufficienti. Hai {user.remaining_holiday_days} giorni disponibili.")
+            return render_template('employee_calendar.html', calendar_data=calendar_data, year=year, month=month, warnings=warnings)
+
         user.credits -= total_cost
         user.remaining_holiday_days -= required_days
+        db.session.add(user)
 
-        for holiday in new_bookings:
-            booking = Booking(user_id=user.id, holiday_id=holiday.id)
+        for booking in new_bookings:
             db.session.add(booking)
-
         db.session.commit()
+
         flash('Ferie prenotate con successo!', 'success')
         return redirect(url_for('employee_calendar_view', year=year, month=month))
 
     return render_template('employee_calendar.html', calendar_data=calendar_data, year=year, month=month, warnings=warnings)
+
+
+
 
 # Route Calendario Amministratore
 @app.route('/admin/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
@@ -307,13 +343,16 @@ def all_bookings_calendar(year, month):
         Holiday.date.between(first_day, last_day)
     ).all()
 
-    # Organizza le prenotazioni per data
+    # Organizza le prenotazioni per data con stato validazione
     bookings_by_date = {}
     for booking in bookings:
         holiday = Holiday.query.get(booking.holiday_id)
         if holiday.date not in bookings_by_date:
             bookings_by_date[holiday.date] = []
-        bookings_by_date[holiday.date].append(booking.user_id)
+        bookings_by_date[holiday.date].append({
+            'user_id': booking.user_id,
+            'is_validated': booking.is_validated  # Stato validazione
+        })
 
     # Costruisci i dati del calendario
     calendar_data = []
@@ -341,6 +380,7 @@ def all_bookings_calendar(year, month):
     )
 
 
+
 @app.route('/cancel-booking', methods=['POST'])
 @login_required
 def cancel_booking():
@@ -362,9 +402,13 @@ def cancel_booking():
     holiday = Holiday.query.get(booking.holiday_id)
 
     if holiday:
-        # Restituisci i crediti e i giorni ferie
-        user.credits += holiday.cost
-        user.remaining_holiday_days += 1
+        # Calcola il rimborso in base al tipo di prenotazione
+        if booking.is_half_day:
+            user.credits += holiday.cost // 2  # Aggiungi metà del costo
+            user.remaining_holiday_days += 0.5  # Aggiungi mezza giornata
+        else:
+            user.credits += holiday.cost  # Aggiungi l'intero costo
+            user.remaining_holiday_days += 1  # Aggiungi una giornata intera
 
         # Rimuovi la prenotazione
         db.session.delete(booking)
@@ -375,7 +419,6 @@ def cancel_booking():
         flash("Errore durante l'annullamento della prenotazione.", "danger")
 
     return redirect(url_for('dashboard'))
-
 
 
 
@@ -394,9 +437,9 @@ def validate_bookings():
     booking_data = [
         {
             'id': booking.id,
-            'user_name': User.query.get(booking.user_id).name,  # Ottieni il nome dell'utente
+            'user_name': User.query.get(booking.user_id).name,
             'holiday_date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'holiday_cost': Holiday.query.get(booking.holiday_id).cost
+            'session': booking.session if booking.is_half_day else "Intera giornata"
         }
         for booking in bookings
     ]
@@ -405,7 +448,7 @@ def validate_bookings():
         validated_bookings = request.form.getlist('validate')
         for booking_id in validated_bookings:
             booking = Booking.query.get(booking_id)
-            if booking:
+            if booking and not booking.is_validated:
                 booking.is_validated = True
                 db.session.commit()
 

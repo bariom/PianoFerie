@@ -10,8 +10,8 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     credits = db.Column(db.Integer, default=410)
-    annual_holiday_days = db.Column(db.Integer, default=33)
-    remaining_holiday_days = db.Column(db.Integer, default=33)
+    annual_holiday_days = db.Column(db.Float, default=33.0)  # Cambiato da Integer a Float
+    remaining_holiday_days = db.Column(db.Float, default=33.0)  # Cambiato da Integer a Float
 
 
 class Holiday(db.Model):
@@ -23,14 +23,20 @@ class Holiday(db.Model):
 class Booking(db.Model):
     __tablename__ = 'booking'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Nota: 'users.id' deve corrispondere al nome della tabella e della colonna
-    holiday_id = db.Column(db.Integer, db.ForeignKey('holidays.id'), nullable=False)  # Nota: 'holidays.id' deve corrispondere al nome della tabella e della colonna
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)  # Collegamento con User
+    holiday_id = db.Column(db.Integer, db.ForeignKey('holidays.id'), nullable=False)  # Collegamento con Holiday
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_validated = db.Column(db.Boolean, default=False)
+    is_half_day = db.Column(db.Boolean, default=False)  # True se è una mezza giornata
+    session = db.Column(db.String(10), nullable=True)  # 'morning' o 'afternoon' per mezze giornate
 
     # Relazioni
     user = db.relationship('User', backref='bookings')
     holiday = db.relationship('Holiday', backref='bookings')
+
+    def __repr__(self):
+        return f'<Booking ID={self.id}, User={self.user_id}, Holiday={self.holiday_id}, HalfDay={self.is_half_day}, Session={self.session}>'
+
 
 
 

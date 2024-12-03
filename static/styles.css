@@ -222,9 +222,13 @@ button:hover {
 }
 
 .cost {
-    font-size: 0.9em;
-    color: #6c757d;
+    background-color: #e9f7fe; /* Colore di sfondo leggero */
+    padding: 5px;
+    border-radius: 5px;
+    display: inline-block;
 }
+
+
 
 .submit-container {
     margin-top: 20px;
@@ -276,4 +280,49 @@ button:hover {
     padding: 2px 5px;
     margin: 2px 0;
     display: inline-block;
+}
+
+
+.half-day-label {
+    font-size: 0.85em; /* Riduce la dimensione del testo */
+    color: #6c757d; /* Colore più tenue */
+    margin-bottom: 5px;
+}
+
+.half-day-options input[type="radio"] {
+    transform: scale(0.9); /* Riduce la dimensione del radio button */
+    margin-right: 5px;
+}
+
+/* Stile per le prenotazioni */
+.booking-user.validated {
+    background-color: #d4edda; /* Verde chiaro */
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    padding: 2px 5px;
+    display: inline-block;
+    margin: 2px 0;
+}
+
+.booking-user.not-validated {
+    background-color: #ffeeba; /* Arancione chiaro */
+    color: #856404;
+    border: 1px solid #ffeeba;
+    border-radius: 4px;
+    padding: 2px 5px;
+    display: inline-block;
+    margin: 2px 0;
+}
+
+.validated {
+    background-color: PaleGreen;
+}
+
+.pending {
+    background-color: PapayaWhip;
+}
+
+.empty {
+    background-color: lightgray;
 }

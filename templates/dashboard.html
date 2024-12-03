@@ -18,6 +18,7 @@
             <thead>
                 <tr>
                     <th>Data</th>
+                    <th>Sessione</th>
                     <th>Costo (crediti)</th>
                     <th>Stato</th>
                     <th>Azioni</th>
@@ -27,6 +28,13 @@
                 {% for booking in booked_holidays %}
                     <tr>
                         <td>{{ booking.date }}</td>
+                        <td>
+                            {% if booking.session %}
+                                {{ 'Mattino' if booking.session == 'morning' else 'Pomeriggio' }}
+                            {% else %}
+                                Intera giornata
+                            {% endif %}
+                        </td>
                         <td>{{ booking.cost }}</td>
                         <td>{{ 'Validata' if booking.is_validated else 'In attesa' }}</td>
                         <td>

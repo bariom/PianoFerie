@@ -13,7 +13,7 @@
             <th>Seleziona</th>
             <th>Nome Utente</th>
             <th>Data Ferie</th>
-            <th>Costo (crediti)</th>
+            <th>Sessione</th>
         </tr>
     </thead>
     <tbody>
@@ -24,7 +24,15 @@
             </td>
             <td>{{ booking.user_name }}</td>
             <td>{{ booking.holiday_date }}</td>
-            <td>{{ booking.holiday_cost }}</td>
+            <td>
+                {% if booking.session == "morning" %}
+                    Mattina
+                {% elif booking.session == "afternoon" %}
+                    Pomeriggio
+                {% else %}
+                    Giornata Intera
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </tbody>
