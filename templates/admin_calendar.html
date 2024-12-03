@@ -3,7 +3,7 @@
 {% block title %}Calendario Amministratore{% endblock %}
 
 {% block content %}
-<h1>Calendario - {{ year }}/{{ month }}</h1>
+<h1>Calendario - {{ month_name|capitalize }} {{ year }}</h1>
 
 <!-- Navigazione tra i mesi -->
 <nav>
@@ -27,11 +27,11 @@
         </thead>
         <tbody>
             {% for day in calendar_days %}
-                <tr {% if day.day_name in ['Saturday', 'Sunday'] %}style="background-color: #f8d7da;"{% endif %}>
+                <tr {% if day.day_name in ['sabato', 'domenica'] %}style="background-color: #f8d7da;"{% endif %}>
                     <td>{{ day.date }}</td>
-                    <td>{{ day.day_name }}</td>
+                    <td>{{ day.day_name|capitalize }}</td>
                     <td>
-                        {% if day.day_name in ['Saturday', 'Sunday'] %}
+                        {% if day.day_name in ['sabato', 'domenica'] %}
                             <input type="number" name="{{ day.date }}" value="0" readonly>
                         {% else %}
                             <input type="number" name="{{ day.date }}" value="{{ day.cost if day.cost is not none else default_cost }}" min="0">

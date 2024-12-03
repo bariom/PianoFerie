@@ -146,8 +146,15 @@ def admin_dashboard():
         flash("Accesso non autorizzato.", "danger")
         return redirect(url_for('dashboard'))
 
+    show_confirmation_modal = request.args.get('confirm', 'false') == 'true'
     now = datetime.now()
-    return render_template('admin_dashboard.html', now=now)
+
+    return render_template(
+        'admin_dashboard.html',
+        now=now,
+        show_confirmation_modal=show_confirmation_modal
+    )
+
 
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
@@ -295,6 +302,7 @@ def employee_calendar_view(year, month):
 
 
 
+from babel.dates import format_date
 
 # Route Calendario Amministratore
 @app.route('/admin/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
@@ -305,10 +313,8 @@ def admin_calendar(year, month):
         flash('Accesso negato. Solo gli amministratori possono accedere a questa pagina.', 'danger')
         return redirect(url_for('dashboard'))
 
-    # Imposta il locale in italiano
-    locale.setlocale(locale.LC_TIME, 'it_IT.UTF-8')
-    # Nome del mese
-    month_name = datetime(year, month, 1).strftime('%B')  # Nome completo del mese
+    # Nome del mese in italiano
+    month_name = format_date(date(year, month, 1), "MMMM", locale="it_IT")
 
     # Ottieni il primo e l'ultimo giorno del mese
     first_day = date(year, month, 1)
@@ -323,7 +329,7 @@ def admin_calendar(year, month):
     calendar_days = [
         {
             'date': first_day + timedelta(days=i),
-            'day_name': day_name[(first_day + timedelta(days=i)).weekday()],  # Nome del giorno
+            'day_name': format_date(first_day + timedelta(days=i), "EEEE", locale="it_IT"),  # Nome del giorno
             'cost': holiday_data.get(first_day + timedelta(days=i), 0 if (first_day + timedelta(days=i)).weekday() >= 5 else Config.DEFAULT_COST)
         }
         for i in range(days_in_month)
@@ -345,10 +351,9 @@ def admin_calendar(year, month):
                     db.session.add(new_holiday)
         db.session.commit()
         flash('Costi aggiornati con successo!', 'success')
-        return redirect(url_for('admin_calendar', year=year, month=month, month_name=month_name))
+        return redirect(url_for('admin_calendar', year=year, month=month))
 
     return render_template('admin_calendar.html', calendar_days=calendar_days, year=year, month=month, month_name=month_name)
-
 
 @app.route('/all-bookings-calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
@@ -532,6 +537,28 @@ def validate_bookings():
         return redirect(url_for('validate_bookings'))
 
     return render_template('validate_bookings.html', bookings=booking_data)
+
+
+@app.route('/delete-rejected-bookings', methods=['POST'])
+@login_required
+def delete_rejected_bookings():
+    if not current_user.is_admin:
+        flash("Accesso non autorizzato. Solo gli amministratori possono eseguire questa operazione.", "danger")
+        return redirect(url_for('admin_dashboard'))
+
+    # Logica per eliminare le prenotazioni rifiutate
+    rejected_bookings = Booking.query.filter_by(is_rejected=True).all()
+
+    if not rejected_bookings:
+        flash("Non ci sono prenotazioni rifiutate da eliminare.", "info")
+    else:
+        count = len(rejected_bookings)
+        for booking in rejected_bookings:
+            db.session.delete(booking)
+        db.session.commit()
+        flash(f"Sono state eliminate {count} prenotazioni rifiutate.", "success")
+
+    return redirect(url_for('admin_dashboard'))
 
 
 

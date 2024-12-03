@@ -3,6 +3,7 @@ from models import Holiday
 from datetime import timedelta
 
 
+
 def add_holiday_with_surrounding_days(holiday_date, weekday_cost=10):
     """
     Aggiunge un giorno festivo con costo zero e imposta un costo per i giorni lavorativi circostanti.
@@ -24,3 +25,7 @@ def add_holiday_with_surrounding_days(holiday_date, weekday_cost=10):
 
     db.session.commit()
     print(f"Aggiunto giorno festivo: {holiday_date} e giorni circostanti.")
+
+
+
+

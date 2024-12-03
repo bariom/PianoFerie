@@ -5,6 +5,7 @@
 {% block content %}
 <h1>Dashboard Amministratore</h1>
 
+
 <!-- Sezione principale della dashboard -->
 <div class="admin-actions">
     <h2>Funzioni Amministrative</h2>
@@ -18,5 +19,44 @@
     <a href="{{ url_for('admin_calendar', year=now.year, month=now.month) }}" class="btn btn-secondary">
         Gestisci Costi del Calendario
     </a>
+    <!-- Link per eliminare tutte le prenotazioni rifiutate -->
+    <a href="{{ url_for('admin_dashboard', confirm='true') }}" class="btn btn-danger">
+        Elimina tutte le prenotazioni rifiutate
+    </a>
 </div>
+
+<!-- Modale per la conferma di eliminazione -->
+{% if show_confirmation_modal %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">Conferma Eliminazione</h5>
+            </div>
+            <div class="modal-body">
+                <p class="text-center">
+                    Sei sicuro di voler eliminare tutte le prenotazioni <strong>rifiutate</strong>?<br>
+                    <span class="text-danger">Questa azione è irreversibile.</span>
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <!-- Pulsante "Annulla" con redirect -->
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Annulla</a>
+
+                <!-- Pulsante "Conferma Eliminazione" -->
+                <form method="POST" action="{{ url_for('delete_rejected_bookings') }}">
+                    <button type="submit" class="btn btn-danger">Conferma Eliminazione</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    // Mostra automaticamente il modale se show_confirmation_modal è True
+    var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+</script>
+{% endif %}
 {% endblock %}
