@@ -8,6 +8,7 @@ from datetime import date, timedelta, datetime
 from config import Config
 from extensions import db, migrate
 from sqlalchemy.orm import joinedload
+import locale
 
 # Configurazione Flask
 app = Flask(__name__)
@@ -109,7 +110,12 @@ def dashboard():
         {
             'id': booking.id,
             'date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'cost': Holiday.query.get(booking.holiday_id).cost,
+            'cost': Holiday.query.get(booking.holiday_id).cost / 2 if booking.is_half_day else Holiday.query.get(booking.holiday_id).cost,
+            'session': (
+                'Mattino' if booking.is_half_day and booking.session == 'morning' else
+                'Pomeriggio' if booking.is_half_day and booking.session == 'afternoon' else
+                'Intera giornata'
+            ),
             'status': (
                 'Rifiutata' if booking.is_rejected else
                 'Validata' if booking.is_validated else
@@ -119,7 +125,6 @@ def dashboard():
         }
         for booking in bookings
     ]
-    print(booked_holidays)
 
     now = datetime.now()
 
@@ -130,6 +135,7 @@ def dashboard():
         booked_holidays=booked_holidays,
         now=now
     )
+
 
 
 # Route Dashboard Amministratore
@@ -146,30 +152,36 @@ def admin_dashboard():
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def employee_calendar_view(year, month):
-    user = current_user  # Utente loggato
-    cal = Calendar(firstweekday=0)  # Calendario inizia con lunedì
-    month_days = cal.monthdayscalendar(year, month)  # Giorni del mese
+    user = current_user
+    cal = Calendar(firstweekday=0)
+    month_days = cal.monthdayscalendar(year, month)
 
-    # Intervallo del mese
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
 
-    # Ottieni festività
     holidays = Holiday.query.filter(Holiday.date.between(first_day, last_day)).all()
     holiday_data = {holiday.date: holiday for holiday in holidays}
 
-    # Costruisci dati calendario
     calendar_data = []
     for week in month_days:
         week_data = []
         for day in week:
-            if day == 0:  # Giorni vuoti nel calendario
-                week_data.append({'date': None, 'cost': None, 'bookings': []})
+            if day == 0:
+                week_data.append({'date': None, 'cost': None, 'css_class': 'empty'})
             else:
                 current_date = date(year, month, day)
                 holiday = holiday_data.get(current_date)
                 cost = holiday.cost if holiday else 10
                 holiday_id = holiday.id if holiday else None
+
+                is_weekend = current_date.weekday() >= 5  # Sabato o Domenica
+                is_holiday = holiday and holiday.cost == 0
+
+                css_class = (
+                    'holiday' if is_holiday else
+                    'weekend' if is_weekend else
+                    ''
+                )
 
                 bookings = Booking.query.filter_by(user_id=user.id, holiday_id=holiday_id).all()
 
@@ -188,14 +200,15 @@ def employee_calendar_view(year, month):
                 week_data.append({
                     'date': current_date,
                     'cost': cost,
+                    'holiday_id': holiday_id,
+                    'css_class': css_class,
                     'full_day_booking': full_day_booking,
                     'half_day_bookings': half_day_bookings,
-                    'is_rejected': full_day_booking.is_rejected if full_day_booking else False,
-                    'is_validated': full_day_booking.is_validated if full_day_booking else False
+                    'is_holiday': is_holiday,
+                    'can_book': not is_holiday and not is_weekend
                 })
         calendar_data.append(week_data)
 
-    # Warnings and POST logic
     warnings = []
     if request.method == 'POST':
         selected_dates = request.form.getlist('selected_dates')
@@ -267,7 +280,18 @@ def employee_calendar_view(year, month):
         flash('Ferie prenotate con successo!', 'success')
         return redirect(url_for('employee_calendar_view', year=year, month=month))
 
-    return render_template('employee_calendar.html', calendar_data=calendar_data, year=year, month=month, warnings=warnings)
+    # Nome del mese in italiano
+    locale.setlocale(locale.LC_TIME, 'it_IT.UTF-8')
+    month_name = datetime(year, month, 1).strftime('%B')
+
+    return render_template(
+        'employee_calendar.html',
+        calendar_data=calendar_data,
+        year=year,
+        month=month,
+        warnings=warnings,
+        month_name=month_name
+    )
 
 
 
@@ -280,6 +304,11 @@ def admin_calendar(year, month):
     if not current_user.is_authenticated or not current_user.is_admin:
         flash('Accesso negato. Solo gli amministratori possono accedere a questa pagina.', 'danger')
         return redirect(url_for('dashboard'))
+
+    # Imposta il locale in italiano
+    locale.setlocale(locale.LC_TIME, 'it_IT.UTF-8')
+    # Nome del mese
+    month_name = datetime(year, month, 1).strftime('%B')  # Nome completo del mese
 
     # Ottieni il primo e l'ultimo giorno del mese
     first_day = date(year, month, 1)
@@ -316,9 +345,9 @@ def admin_calendar(year, month):
                     db.session.add(new_holiday)
         db.session.commit()
         flash('Costi aggiornati con successo!', 'success')
-        return redirect(url_for('admin_calendar', year=year, month=month))
+        return redirect(url_for('admin_calendar', year=year, month=month, month_name=month_name))
 
-    return render_template('admin_calendar.html', calendar_days=calendar_days, year=year, month=month)
+    return render_template('admin_calendar.html', calendar_days=calendar_days, year=year, month=month, month_name=month_name)
 
 
 @app.route('/all-bookings-calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
@@ -333,6 +362,10 @@ def all_bookings_calendar(year, month):
 
     cal = Calendar(firstweekday=0)
     month_days = cal.monthdayscalendar(year, month)
+    # Imposta il locale in italiano
+    locale.setlocale(locale.LC_TIME, 'it_IT.UTF-8')
+    # Nome del mese
+    month_name = datetime(year, month, 1).strftime('%B')
 
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
@@ -388,7 +421,8 @@ def all_bookings_calendar(year, month):
         all_users=all_users,
         selected_users=[int(uid) for uid in selected_users],
         year=year,
-        month=month
+        month=month,
+        month_name=month_name
     )
 
 
@@ -452,9 +486,13 @@ def validate_bookings():
             'id': booking.id,
             'user_name': User.query.get(booking.user_id).name,
             'holiday_date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'holiday_cost': Holiday.query.get(booking.holiday_id).cost,
+            'holiday_cost': Holiday.query.get(booking.holiday_id).cost / 2 if booking.is_half_day else Holiday.query.get(booking.holiday_id).cost,
             'is_half_day': booking.is_half_day,
-            'session': booking.session
+            'session': (
+                'Mattino' if booking.is_half_day and booking.session == 'morning' else
+                'Pomeriggio' if booking.is_half_day and booking.session == 'afternoon' else
+                'Intera giornata'
+            )
         }
         for booking in bookings
     ]
@@ -479,7 +517,7 @@ def validate_bookings():
             holiday = Holiday.query.get(booking.holiday_id)
 
             if booking.is_half_day:
-                user.credits += holiday.cost // 2
+                user.credits += holiday.cost / 2
                 user.remaining_holiday_days += 0.5
             else:
                 user.credits += holiday.cost
@@ -494,6 +532,7 @@ def validate_bookings():
         return redirect(url_for('validate_bookings'))
 
     return render_template('validate_bookings.html', bookings=booking_data)
+
 
 
 

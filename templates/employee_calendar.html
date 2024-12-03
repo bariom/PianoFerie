@@ -3,7 +3,7 @@
 {% block title %}Prenota Ferie{% endblock %}
 
 {% block content %}
-<h1>Calendario - {{ year }}/{{ month }}</h1>
+<h1>Calendario - {{ month_name|capitalize }} {{ year }}</h1>
 
 <!-- Navigazione tra i mesi -->
 <nav>
@@ -46,39 +46,32 @@
                 <tr>
                     {% for day in week %}
                         {% if day.date %}
-                            <td class="
-                                {% if day.full_day_booking and day.full_day_booking.is_rejected %}rejected
-                                {% elif day.full_day_booking and day.full_day_booking.is_validated %}validated
-                                {% elif day.full_day_booking %}pending
-                                {% elif day.half_day_bookings and day.half_day_bookings[0].is_rejected %}rejected
-                                {% elif day.half_day_bookings and day.half_day_bookings[0].is_validated %}validated
-                                {% elif day.half_day_bookings %}pending{% endif %}">
+                            <td class="calendar-day
+                                {% if day.is_holiday %}holiday{% elif day.date.weekday() >= 5 %}weekend{% endif %}">
                                 <label>
                                     <input
                                         type="checkbox"
                                         name="selected_dates"
                                         value="{{ day.date }}"
-                                        {% if day.full_day_booking or day.half_day_bookings %}disabled{% endif %}>
+                                        {% if day.is_holiday or day.date.weekday() >= 5 or day.full_day_booking %}disabled{% endif %}>
                                     <span class="date">{{ day.date.day }}</span>
                                 </label>
                                 <div class="cost">
                                     <span class="credits">{{ day.cost }}</span> crediti
                                 </div>
 
-                                <!-- Prenotazioni Esistenti -->
+                                <!-- Prenotazioni esistenti -->
                                 {% if day.full_day_booking %}
                                     <div class="booked-day">
-                                        <span class="{{ 'validated' if day.full_day_booking.is_validated else 'rejected' if day.full_day_booking.is_rejected else 'pending' }}">
+                                        <span class="{{ 'validated' if day.full_day_booking.is_validated else 'pending' if not day.full_day_booking.is_rejected else 'rejected' }}">
                                             Giornata Intera ({{ 'Validata' if day.full_day_booking.is_validated else 'Rifiutata' if day.full_day_booking.is_rejected else 'In attesa' }})
                                         </span>
                                     </div>
                                 {% endif %}
-
-                                <!-- Mezze Giornate Prenotate -->
                                 {% if day.half_day_bookings %}
                                     <div class="half-day-bookings">
                                         {% for booking in day.half_day_bookings %}
-                                            <span class="{{ 'validated' if booking.is_validated else 'rejected' if booking.is_rejected else 'pending' }}">
+                                            <span class="{{ 'validated' if booking.is_validated else 'pending' if not booking.is_rejected else 'rejected' }}">
                                                 {{ 'AM' if booking.session == 'morning' else 'PM' }}
                                                 ({{ 'Validata' if booking.is_validated else 'Rifiutata' if booking.is_rejected else 'In attesa' }})
                                             </span>
@@ -87,7 +80,7 @@
                                 {% endif %}
 
                                 <!-- Opzioni per prenotare mezze giornate -->
-                                {% if not day.full_day_booking and not day.half_day_bookings %}
+                                {% if not day.full_day_booking and not day.half_day_bookings and not day.is_holiday and day.date.weekday() < 5 %}
                                     <div class="half-day-options">
                                         <label class="half-day-label">
                                             <input
@@ -106,6 +99,7 @@
                                     </div>
                                 {% endif %}
                             </td>
+
                         {% else %}
                             <td class="empty"></td>
                         {% endif %}

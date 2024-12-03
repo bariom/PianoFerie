@@ -284,3 +284,21 @@ button:hover {
     font-style: italic;
     font-size: 0.9em;
 }
+
+.holiday {
+    background-color: #ffe4e1; /* Rosa chiaro */
+    color: #ff0000; /* Testo rosso */
+    cursor: not-allowed;
+}
+
+.calendar-table .holiday {
+    background-color: #e6e6e6; /* Grigio chiaro */
+    color: #999999; /* Testo grigio */
+    cursor: not-allowed;
+}
+
+.calendar-table .weekend {
+    background-color: #f0f0f0; /* Grigio più tenue */
+    color: #666666; /* Testo grigio scuro */
+    cursor: not-allowed;
+}
