@@ -109,26 +109,27 @@ def dashboard():
         {
             'id': booking.id,
             'date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'cost': Holiday.query.get(booking.holiday_id).cost / 2 if booking.is_half_day else Holiday.query.get(booking.holiday_id).cost,
-            'session': booking.session if booking.is_half_day else None,
-            'is_validated': booking.is_validated
+            'cost': Holiday.query.get(booking.holiday_id).cost,
+            'status': (
+                'Rifiutata' if booking.is_rejected else
+                'Validata' if booking.is_validated else
+                'In attesa'
+            ),
+            'is_rejected': booking.is_rejected
         }
         for booking in bookings
     ]
+    print(booked_holidays)
 
     now = datetime.now()
+
+    # Renderizza il template con i dati aggiornati
     return render_template(
         'dashboard.html',
         user=user,
         booked_holidays=booked_holidays,
         now=now
     )
-
-
-
-
-
-
 
 
 # Route Dashboard Amministratore
@@ -142,26 +143,27 @@ def admin_dashboard():
     now = datetime.now()
     return render_template('admin_dashboard.html', now=now)
 
-
-# Route Calendario Dipendente
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def employee_calendar_view(year, month):
-    user = current_user
-    cal = Calendar(firstweekday=0)
-    month_days = cal.monthdayscalendar(year, month)
+    user = current_user  # Utente loggato
+    cal = Calendar(firstweekday=0)  # Calendario inizia con lunedì
+    month_days = cal.monthdayscalendar(year, month)  # Giorni del mese
 
+    # Intervallo del mese
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
 
+    # Ottieni festività
     holidays = Holiday.query.filter(Holiday.date.between(first_day, last_day)).all()
     holiday_data = {holiday.date: holiday for holiday in holidays}
 
+    # Costruisci dati calendario
     calendar_data = []
     for week in month_days:
         week_data = []
         for day in week:
-            if day == 0:
+            if day == 0:  # Giorni vuoti nel calendario
                 week_data.append({'date': None, 'cost': None, 'bookings': []})
             else:
                 current_date = date(year, month, day)
@@ -177,7 +179,8 @@ def employee_calendar_view(year, month):
                 half_day_bookings = [
                     {
                         'session': b.session,
-                        'is_validated': b.is_validated
+                        'is_validated': b.is_validated,
+                        'is_rejected': b.is_rejected
                     }
                     for b in bookings if b.is_half_day
                 ]
@@ -186,10 +189,13 @@ def employee_calendar_view(year, month):
                     'date': current_date,
                     'cost': cost,
                     'full_day_booking': full_day_booking,
-                    'half_day_bookings': half_day_bookings
+                    'half_day_bookings': half_day_bookings,
+                    'is_rejected': full_day_booking.is_rejected if full_day_booking else False,
+                    'is_validated': full_day_booking.is_validated if full_day_booking else False
                 })
         calendar_data.append(week_data)
 
+    # Warnings and POST logic
     warnings = []
     if request.method == 'POST':
         selected_dates = request.form.getlist('selected_dates')
@@ -341,19 +347,23 @@ def all_bookings_calendar(year, month):
     bookings = Booking.query.join(User).join(Holiday).filter(
         Booking.user_id.in_(selected_users),
         Holiday.date.between(first_day, last_day)
-    ).options(joinedload(Booking.holiday)).all()
+    ).options(joinedload(Booking.holiday), joinedload(Booking.user)).all()
 
     # Organizza le prenotazioni per data
     bookings_by_date = {}
     for booking in bookings:
-        holiday_date = booking.holiday.date
-        if holiday_date not in bookings_by_date:
-            bookings_by_date[holiday_date] = []
-        bookings_by_date[holiday_date].append({
-            'user_name': booking.user.name,
-            'is_validated': booking.is_validated,
+        holiday = booking.holiday
+        user = booking.user
+
+        if holiday.date not in bookings_by_date:
+            bookings_by_date[holiday.date] = []
+
+        bookings_by_date[holiday.date].append({
+            'user_name': user.name,
             'is_half_day': booking.is_half_day,
-            'session': booking.session  # AM o PM per mezze giornate
+            'session': booking.session,
+            'is_validated': booking.is_validated,
+            'is_rejected': booking.is_rejected
         })
 
     # Costruisci i dati del calendario
@@ -380,6 +390,7 @@ def all_bookings_calendar(year, month):
         year=year,
         month=month
     )
+
 
 
 
@@ -432,8 +443,8 @@ def validate_bookings():
         flash("Accesso non autorizzato.", "danger")
         return redirect(url_for('dashboard'))
 
-    # Ottenere tutte le prenotazioni non validate
-    bookings = Booking.query.filter_by(is_validated=False).all()
+    # Ottenere tutte le prenotazioni non validate e non rifiutate
+    bookings = Booking.query.filter_by(is_validated=False, is_rejected=False).all()
 
     # Prepara i dati per il template
     booking_data = [
@@ -441,23 +452,49 @@ def validate_bookings():
             'id': booking.id,
             'user_name': User.query.get(booking.user_id).name,
             'holiday_date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'session': booking.session if booking.is_half_day else "Intera giornata"
+            'holiday_cost': Holiday.query.get(booking.holiday_id).cost,
+            'is_half_day': booking.is_half_day,
+            'session': booking.session
         }
         for booking in bookings
     ]
 
     if request.method == 'POST':
-        validated_bookings = request.form.getlist('validate')
-        for booking_id in validated_bookings:
-            booking = Booking.query.get(booking_id)
-            if booking and not booking.is_validated:
-                booking.is_validated = True
-                db.session.commit()
+        booking_id = request.form.get('booking_id')
+        action = request.form.get('action')
 
-        flash("Prenotazioni validate con successo!", "success")
+        booking = Booking.query.get(booking_id)
+        if not booking:
+            flash("Prenotazione non trovata.", "danger")
+            return redirect(url_for('validate_bookings'))
+
+        if action == "validate":
+            booking.is_validated = True
+            db.session.add(booking)
+            flash("Prenotazione validata con successo.", "success")
+
+        elif action == "reject":
+            # Ripristina il saldo ferie e crediti
+            user = User.query.get(booking.user_id)
+            holiday = Holiday.query.get(booking.holiday_id)
+
+            if booking.is_half_day:
+                user.credits += holiday.cost // 2
+                user.remaining_holiday_days += 0.5
+            else:
+                user.credits += holiday.cost
+                user.remaining_holiday_days += 1
+
+            booking.is_rejected = True
+            db.session.add(user)
+            db.session.add(booking)
+            flash("Prenotazione rifiutata con successo.", "success")
+
+        db.session.commit()
         return redirect(url_for('validate_bookings'))
 
     return render_template('validate_bookings.html', bookings=booking_data)
+
 
 
 # Avvio dell'applicazione

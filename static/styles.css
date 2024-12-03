@@ -5,7 +5,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 20px;
     padding: 20px;
-    background-color: #f9f9f9; /* Colore di sfondo leggero */
+    background-color: #f9f9f9; /* Sfondo chiaro */
     color: #333; /* Testo primario */
 }
 
@@ -59,11 +59,12 @@ th, td {
 
 th {
     background-color: #f4f4f4;
+    font-weight: bold;
 }
 
 tr[style] {
     color: #721c24;
-    background-color: #f8d7da; /* Weekend: rosso chiaro */
+    background-color: #f8d7da; /* Weekend rosso chiaro */
 }
 
 /* ==================================================
@@ -142,16 +143,14 @@ button:hover {
     padding: 10px 20px;
     text-decoration: none;
     border-radius: 5px;
-    font-size: 0.9rem;        /* Riduci leggermente il testo */
+    font-size: 0.9rem;
     cursor: pointer;
 }
 
 .btn-logout:hover {
-    background-color: #e2e6ea; /* Grigio leggermente più scuro per hover */
-    color: #495057;           /* Grigio scuro per hover */
+    background-color: #e2e6ea; /* Grigio hover */
+    color: #495057;           /* Grigio scuro */
 }
-
-
 
 /* ==================================================
    CONTENITORI
@@ -206,9 +205,8 @@ button:hover {
 }
 
 .calendar-table td.booked {
-    background-color: #d4edda; /* Verde chiaro per giorni prenotati */
+    background-color: #d4edda; /* Verde per giorni prenotati */
     color: #155724;
-    cursor: not-allowed;
 }
 
 .calendar-table td.empty {
@@ -216,113 +214,73 @@ button:hover {
     border: none;
 }
 
-.date {
+/* Stile per la data */
+.calendar-day .date {
     font-size: 1.2em;
     font-weight: bold;
-}
-
-.cost {
-    background-color: #e9f7fe; /* Colore di sfondo leggero */
-    padding: 5px;
-    border-radius: 5px;
-    display: inline-block;
-}
-
-
-
-.submit-container {
-    margin-top: 20px;
-    text-align: right;
-}
-
-/* Stile per il warning */
-.warning-box {
-    border: 2px solid #f5c6cb;
-    background-color: #f8d7da;
-    color: #721c24;
-    padding: 15px;
-    border-radius: 5px;
-    margin-top: 20px;
-    font-size: 16px;
-}
-
-.warning-box ul {
-    margin: 0;
-    padding-left: 20px;
-}
-
-.warning-box strong {
-    font-weight: bold;
+    margin-bottom: 4px;
     display: block;
-    margin-bottom: 10px;
 }
 
-/* ==================================================
-   PRENOTAZIONI
-   ================================================== */
-.calendar-day {
-    padding: 10px;
-    border: 1px solid #ddd;
-    text-align: center;
-}
-
-.booking-list {
-    list-style: none;
-    padding: 0;
-    margin: 5px 0 0;
-}
-
-.booking-user {
-    font-size: 12px;
-    background-color: #f0f8ff;
-    border: 1px solid #add8e6;
+/* Prenotazioni */
+.calendar-day .booking-user {
+    margin-top: 5px;
+    padding: 3px 5px;
     border-radius: 4px;
-    padding: 2px 5px;
-    margin: 2px 0;
+    font-size: 0.9em;
     display: inline-block;
 }
 
-
-.half-day-label {
-    font-size: 0.85em; /* Riduce la dimensione del testo */
-    color: #6c757d; /* Colore più tenue */
-    margin-bottom: 5px;
-}
-
-.half-day-options input[type="radio"] {
-    transform: scale(0.9); /* Riduce la dimensione del radio button */
-    margin-right: 5px;
-}
-
-/* Stile per le prenotazioni */
-.booking-user.validated {
-    background-color: #d4edda; /* Verde chiaro */
-    color: #155724;
-    border: 1px solid #c3e6cb;
-    border-radius: 4px;
-    padding: 2px 5px;
-    display: inline-block;
-    margin: 2px 0;
-}
-
-.booking-user.not-validated {
-    background-color: #ffeeba; /* Arancione chiaro */
-    color: #856404;
-    border: 1px solid #ffeeba;
-    border-radius: 4px;
-    padding: 2px 5px;
-    display: inline-block;
-    margin: 2px 0;
-}
-
+/* Stati delle prenotazioni */
 .validated {
-    background-color: PaleGreen;
+    background-color: PaleGreen; /* Verde validato */
+    color: DarkGreen;
+    border: 1px solid #98fb98;
 }
 
 .pending {
-    background-color: PapayaWhip;
+    background-color: PapayaWhip; /* Arancione in attesa */
+    color: DarkGoldenRod;
+    border: 1px solid #ffd700;
+}
+
+.rejected {
+    background-color: MistyRose; /* Rosso rifiutato */
+    color: LightCoral;
+    border: 1px solid #f5c6cb;
 }
 
 .empty {
-    background-color: lightgray;
+    background-color: lightgray; /* Celle vuote */
+    color: gray;
+    height: 50px;
+}
+
+/* Crediti */
+.cost {
+    background-color: #e9f7fe; /* Sfondo leggero */
+    color: #007bff; /* Testo blu */
+    padding: 3px 5px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+}
+
+/* Contenitori per opzioni */
+.half-day-options {
+    margin-top: 5px;
+    font-size: 0.85em;
+}
+
+/* Radio buttons per AM/PM */
+.half-day-options input[type="radio"] {
+    transform: scale(0.9);
+    margin-right: 5px;
+}
+
+
+.text-muted {
+    color: #6c757d; /* Grigio tenue */
+    font-style: italic;
+    font-size: 0.9em;
 }

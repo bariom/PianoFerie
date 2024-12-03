@@ -53,7 +53,12 @@
                             {% if day.bookings %}
                                 <ul class="booking-list">
                                     {% for booking in day.bookings %}
-                                        <li class="booking-user {{ 'validated' if booking.is_validated else 'pending' }}">
+                                        <li class="
+                                            {% if booking.is_rejected %}rejected
+                                            {% elif booking.is_validated %}validated
+                                            {% else %}pending
+                                            {% endif %}
+                                        ">
                                             {{ booking.user_name }}
                                             {% if booking.is_half_day %}
                                                 ({{ 'AM' if booking.session == 'morning' else 'PM' }})

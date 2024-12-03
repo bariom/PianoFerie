@@ -36,12 +36,22 @@
                             {% endif %}
                         </td>
                         <td>{{ booking.cost }}</td>
-                        <td>{{ 'Validata' if booking.is_validated else 'In attesa' }}</td>
+                        <td class="
+                            {% if booking.status == 'Rifiutata' %}rejected
+                            {% elif booking.status == 'Validata' %}validated
+                            {% else %}pending{% endif %}
+                        ">
+                            {{ booking.status }}
+                        </td>
                         <td>
-                            <form method="POST" action="{{ url_for('cancel_booking') }}">
-                                <input type="hidden" name="booking_id" value="{{ booking.id }}">
-                                <button type="submit" class="btn btn-danger btn-sm">Annulla</button>
-                            </form>
+                            {% if not booking.is_rejected %}
+                                <form method="POST" action="{{ url_for('cancel_booking') }}">
+                                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Annulla</button>
+                                </form>
+                            {% else %}
+                                <span class="text-muted">Non disponibile</span>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

@@ -47,8 +47,11 @@
                     {% for day in week %}
                         {% if day.date %}
                             <td class="
-                                {% if day.full_day_booking and day.full_day_booking.is_validated %}validated
+                                {% if day.full_day_booking and day.full_day_booking.is_rejected %}rejected
+                                {% elif day.full_day_booking and day.full_day_booking.is_validated %}validated
                                 {% elif day.full_day_booking %}pending
+                                {% elif day.half_day_bookings and day.half_day_bookings[0].is_rejected %}rejected
+                                {% elif day.half_day_bookings and day.half_day_bookings[0].is_validated %}validated
                                 {% elif day.half_day_bookings %}pending{% endif %}">
                                 <label>
                                     <input
@@ -65,8 +68,8 @@
                                 <!-- Prenotazioni Esistenti -->
                                 {% if day.full_day_booking %}
                                     <div class="booked-day">
-                                        <span class="{{ 'validated' if day.full_day_booking.is_validated else 'pending' }}">
-                                            Giornata Intera ({{ 'Validata' if day.full_day_booking.is_validated else 'In attesa' }})
+                                        <span class="{{ 'validated' if day.full_day_booking.is_validated else 'rejected' if day.full_day_booking.is_rejected else 'pending' }}">
+                                            Giornata Intera ({{ 'Validata' if day.full_day_booking.is_validated else 'Rifiutata' if day.full_day_booking.is_rejected else 'In attesa' }})
                                         </span>
                                     </div>
                                 {% endif %}
@@ -75,9 +78,9 @@
                                 {% if day.half_day_bookings %}
                                     <div class="half-day-bookings">
                                         {% for booking in day.half_day_bookings %}
-                                            <span class="{{ 'validated' if booking.is_validated else 'pending' }}">
+                                            <span class="{{ 'validated' if booking.is_validated else 'rejected' if booking.is_rejected else 'pending' }}">
                                                 {{ 'AM' if booking.session == 'morning' else 'PM' }}
-                                                ({{ 'Validata' if booking.is_validated else 'In attesa' }})
+                                                ({{ 'Validata' if booking.is_validated else 'Rifiutata' if booking.is_rejected else 'In attesa' }})
                                             </span>
                                         {% endfor %}
                                     </div>

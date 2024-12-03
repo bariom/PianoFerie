@@ -27,6 +27,7 @@ class Booking(db.Model):
     holiday_id = db.Column(db.Integer, db.ForeignKey('holidays.id'), nullable=False)  # Collegamento con Holiday
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_validated = db.Column(db.Boolean, default=False)
+    is_rejected = db.Column(db.Boolean, default=False)  # Nuovo campo per prenotazioni rifiutate
     is_half_day = db.Column(db.Boolean, default=False)  # True se è una mezza giornata
     session = db.Column(db.String(10), nullable=True)  # 'morning' o 'afternoon' per mezze giornate
 

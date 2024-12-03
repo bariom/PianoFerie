@@ -6,41 +6,45 @@
 <h1>Validazione Prenotazioni</h1>
 
 {% if bookings %}
-<form method="POST">
-<table>
+<table class="table">
     <thead>
         <tr>
-            <th>Seleziona</th>
             <th>Nome Utente</th>
             <th>Data Ferie</th>
+            <th>Costo (crediti)</th>
             <th>Sessione</th>
+            <th>Azioni</th>
         </tr>
     </thead>
     <tbody>
         {% for booking in bookings %}
         <tr>
-            <td>
-                <input type="checkbox" name="validate" value="{{ booking.id }}">
-            </td>
             <td>{{ booking.user_name }}</td>
             <td>{{ booking.holiday_date }}</td>
+            <td>{{ booking.holiday_cost }}</td>
             <td>
-                {% if booking.session == "morning" %}
-                    Mattina
-                {% elif booking.session == "afternoon" %}
-                    Pomeriggio
+                {% if booking.is_half_day %}
+                    {{ 'AM' if booking.session == 'morning' else 'PM' }}
                 {% else %}
-                    Giornata Intera
+                    Intera giornata
                 {% endif %}
+            </td>
+            <td>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                    <input type="hidden" name="action" value="validate">
+                    <button type="submit" class="btn btn-success btn-sm">Valida</button>
+                </form>
+                <form method="POST" style="display:inline;">
+                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                    <input type="hidden" name="action" value="reject">
+                    <button type="submit" class="btn btn-danger btn-sm">Rifiuta</button>
+                </form>
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
-<button type="submit">Valida Prenotazioni</button>
-
-</form>
 {% else %}
 <p>Non ci sono prenotazioni in attesa di validazione.</p>
 {% endif %}
