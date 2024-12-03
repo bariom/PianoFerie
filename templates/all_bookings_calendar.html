@@ -53,9 +53,11 @@
                             {% if day.bookings %}
                                 <ul class="booking-list">
                                     {% for booking in day.bookings %}
-                                        <li class="booking-user
-                                                   {% if booking.is_validated %}validated{% else %}not-validated{% endif %}">
-                                            {{ all_users|selectattr('id', 'equalto', booking.user_id)|map(attribute='name')|join(', ') }}
+                                        <li class="booking-user {{ 'validated' if booking.is_validated else 'pending' }}">
+                                            {{ booking.user_name }}
+                                            {% if booking.is_half_day %}
+                                                ({{ 'AM' if booking.session == 'morning' else 'PM' }})
+                                            {% endif %}
                                         </li>
                                     {% endfor %}
                                 </ul>

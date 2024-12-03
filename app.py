@@ -341,17 +341,19 @@ def all_bookings_calendar(year, month):
     bookings = Booking.query.join(User).join(Holiday).filter(
         Booking.user_id.in_(selected_users),
         Holiday.date.between(first_day, last_day)
-    ).all()
+    ).options(joinedload(Booking.holiday)).all()
 
-    # Organizza le prenotazioni per data con stato validazione
+    # Organizza le prenotazioni per data
     bookings_by_date = {}
     for booking in bookings:
-        holiday = Holiday.query.get(booking.holiday_id)
-        if holiday.date not in bookings_by_date:
-            bookings_by_date[holiday.date] = []
-        bookings_by_date[holiday.date].append({
-            'user_id': booking.user_id,
-            'is_validated': booking.is_validated  # Stato validazione
+        holiday_date = booking.holiday.date
+        if holiday_date not in bookings_by_date:
+            bookings_by_date[holiday_date] = []
+        bookings_by_date[holiday_date].append({
+            'user_name': booking.user.name,
+            'is_validated': booking.is_validated,
+            'is_half_day': booking.is_half_day,
+            'session': booking.session  # AM o PM per mezze giornate
         })
 
     # Costruisci i dati del calendario
