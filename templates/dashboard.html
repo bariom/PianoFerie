@@ -12,6 +12,10 @@
         <p>Giorni di ferie residui: <strong>{{ user.remaining_holiday_days }}</strong></p>
     </div>
 
+    <div class="actions">
+        <a href="{{ url_for('employee_calendar_view', year=now.year, month=now.month) }}" class="btn btn-primary">Prenota Ferie</a>
+    </div>
+
     <h2>Ferie Prenotate</h2>
     {% if booked_holidays %}
         <table class="table">
@@ -61,8 +65,6 @@
         <p>Non hai ferie prenotate al momento.</p>
     {% endif %}
 
-    <div class="actions">
-        <a href="{{ url_for('employee_calendar_view', year=now.year, month=now.month) }}" class="btn btn-primary">Prenota Ferie</a>
-    </div>
+
 </div>
 {% endblock %}

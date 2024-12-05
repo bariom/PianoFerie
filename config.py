@@ -1,5 +1,5 @@
 #DEFAULT_COST = 10  # Costo di una giornata normale
-#DEFAULT_CREDITS = 410  # Crediti iniziali per ogni dipendente
+#DEFAULT_CREDITS = 410  # Crediti iniziali per ogni dipendente (12,42 crediti a giorno)
 #HIGH_DEMAND_COST = 15  # Costo per giorni ad alta richiesta
 #HOLIDAY_COST = 20  # Costo per festività principali
 class Config:

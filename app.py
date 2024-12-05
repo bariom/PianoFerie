@@ -216,6 +216,10 @@ def employee_calendar_view(year, month):
                 })
         calendar_data.append(week_data)
 
+    # Saldi aggiornati
+    credits = user.credits
+    remaining_days = user.remaining_holiday_days
+
     warnings = []
     if request.method == 'POST':
         selected_dates = request.form.getlist('selected_dates')
@@ -297,7 +301,9 @@ def employee_calendar_view(year, month):
         year=year,
         month=month,
         warnings=warnings,
-        month_name=month_name
+        month_name=month_name,
+        credits=credits,
+        remaining_days=remaining_days
     )
 
 

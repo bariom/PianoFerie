@@ -11,7 +11,6 @@
     <header>
         <nav>
             <a href="{{ url_for('index') }}">Home</a>
-
             {% if current_user.is_authenticated %}
                 {% if current_user.is_admin %}
                     <a href="{{ url_for('admin_dashboard') }}">Dashboard Admin</a>
@@ -23,6 +22,7 @@
                 <a href="{{ url_for('login') }}">Login</a>
             {% endif %}
         </nav>
+
     </header>
 
     <main class="container">

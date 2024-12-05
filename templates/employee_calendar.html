@@ -5,6 +5,12 @@
 {% block content %}
 <h1>Calendario - {{ month_name|capitalize }} {{ year }}</h1>
 
+<div class="balance-info">
+    <h4>Il tuo saldo:</h4>
+    <p><strong>Crediti disponibili:</strong> {{ credits }}</p>
+    <p><strong>Giorni di ferie residui:</strong> {{ remaining_days }}</p>
+</div>
+
 <!-- Navigazione tra i mesi -->
 <nav>
     <a href="{{ url_for('employee_calendar_view', year=year if month > 1 else year - 1, month=month - 1 if month > 1 else 12) }}">
