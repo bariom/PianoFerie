@@ -171,6 +171,19 @@ tr[style] {
     color: #155724;
 }
 
+.calendar-table .holiday {
+    background-color: #ffe4e1; /* Colore rosa chiaro per festivi */
+    color: #ff0000; /* Testo rosso */
+    font-weight: bold;
+}
+
+.calendar-table .weekend {
+    background-color: #f0f0f0; /* Colore grigio chiaro per weekend */
+    color: #666666; /* Testo grigio scuro */
+    font-style: italic;
+}
+
+
 /* Stile per la data */
 .calendar-day .date {
     font-size: 1.2em;

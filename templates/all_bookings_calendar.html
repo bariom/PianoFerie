@@ -3,7 +3,7 @@
 {% block title %}Calendario Prenotazioni{% endblock %}
 
 {% block content %}
-<h1>Calendario - {{ month_name }} {{ year }}</h1>
+<h1>Calendario - {{ month_name|capitalize }} {{ year }}</h1>
 
 <!-- Navigazione tra i mesi -->
 <nav>
@@ -48,7 +48,10 @@
             <tr>
                 {% for day in week %}
                     {% if day.date %}
-                        <td class="calendar-day">
+                        <td class="calendar-day
+                            {% if day.is_holiday %}holiday
+                            {% elif day.is_weekend %}weekend{% endif %}
+                        ">
                             <div class="date">{{ day.date.day }}</div>
                             {% if day.bookings %}
                                 <ul class="booking-list">

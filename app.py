@@ -373,19 +373,25 @@ def all_bookings_calendar(year, month):
 
     cal = Calendar(firstweekday=0)
     month_days = cal.monthdayscalendar(year, month)
+
     # Imposta il locale in italiano
     locale.setlocale(locale.LC_TIME, 'it_IT.UTF-8')
+
     # Nome del mese
     month_name = datetime(year, month, 1).strftime('%B')
 
     first_day = date(year, month, 1)
     last_day = date(year, month, monthrange(year, month)[1])
 
-    # Ottieni utenti selezionati (via POST o mostra tutti di default)
+    # Ottieni gli utenti selezionati
     selected_users = request.form.getlist('selected_users') if request.method == 'POST' else []
     if not selected_users:
         all_users = User.query.all()
         selected_users = [str(user.id) for user in all_users]
+
+    # Ottieni tutte le festività e i loro costi
+    holidays = Holiday.query.filter(Holiday.date.between(first_day, last_day)).all()
+    holiday_dates = {holiday.date: holiday.cost for holiday in holidays}
 
     # Ottieni prenotazioni in base agli utenti selezionati
     bookings = Booking.query.join(User).join(Holiday).filter(
@@ -416,11 +422,17 @@ def all_bookings_calendar(year, month):
         week_data = []
         for day in week:
             if day == 0:
-                week_data.append({'date': None, 'bookings': []})
+                week_data.append({'date': None, 'bookings': [], 'is_holiday': False, 'cost': None})
             else:
                 current_date = date(year, month, day)
-                bookings = bookings_by_date.get(current_date, [])
-                week_data.append({'date': current_date, 'bookings': bookings})
+                cost = holiday_dates.get(current_date, 10)  # Assumi un costo di default se non esiste nel DB
+                is_holiday = cost == 0  # Festivo se il costo è zero
+                week_data.append({
+                    'date': current_date,
+                    'bookings': bookings_by_date.get(current_date, []),
+                    'is_holiday': is_holiday,
+                    'cost': cost
+                })
         calendar_data.append(week_data)
 
     # Ottieni tutti gli utenti per i filtri
@@ -435,6 +447,8 @@ def all_bookings_calendar(year, month):
         month=month,
         month_name=month_name
     )
+
+
 
 
 
