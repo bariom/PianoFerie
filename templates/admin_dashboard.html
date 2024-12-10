@@ -7,24 +7,35 @@
 
 <section class="admin-actions mb-5">
     <h2>Funzioni Amministrative</h2>
-    <div class="d-flex flex-wrap gap-3">
+    <div class="d-flex flex-wrap gap-3 mb-3">
         <a href="{{ url_for('all_bookings_calendar', year=now.year, month=now.month) }}" class="btn btn-primary">
             Visualizza Calendario Prenotazioni
         </a>
         <a href="{{ url_for('validate_bookings') }}" class="btn btn-primary">
             Gestisci Prenotazioni
         </a>
+    </div>
+    <hr>
+    <h3>Gestione corrente</h3>
+    <div class="d-flex flex-wrap gap-3 mt-3">
+        <a href="{{ url_for('admin_users') }}" class="btn btn-info">
+            Gestisci Utenti</a>
         <a href="{{ url_for('admin_calendar', year=now.year, month=now.month) }}" class="btn btn-secondary">
             Gestisci Costi del Calendario
+        </a>
+
+    <hr>
+        <h3>Utilità</h3>
+        <a href="{{ url_for('admin_dashboard', process_year_end='true') }}" class="btn btn-warning">
+            Trasferimento Saldi
         </a>
         <a href="{{ url_for('admin_dashboard', confirm='true') }}" class="btn btn-danger">
             Elimina tutte le prenotazioni rifiutate
         </a>
-        <a href="{{ url_for('admin_dashboard', process_year_end='true') }}" class="btn btn-warning">
-            Trasferimento Saldi
-        </a>
     </div>
 </section>
+
+
 
 <!-- Modale per la conferma di eliminazione -->
 {% if show_confirmation_modal %}

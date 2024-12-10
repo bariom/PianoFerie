@@ -160,6 +160,48 @@ def admin_dashboard():
     )
 
 
+@app.route('/admin/users', methods=['GET'])
+@login_required
+def admin_users():
+    if not current_user.is_admin:
+        flash("Accesso non autorizzato.", "danger")
+        return redirect(url_for('dashboard'))
+    users = User.query.all()
+    return render_template('admin_users.html', users=users)
+
+
+@app.route('/admin/edit_user/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id):
+    if not current_user.is_admin:
+        flash("Accesso non autorizzato.", "danger")
+        return redirect(url_for('dashboard'))
+
+    user = User.query.get(user_id)
+    if not user:
+        flash("Utente non trovato.", "danger")
+        return redirect(url_for('admin_users'))
+
+    if request.method == 'POST':
+        user.name = request.form.get('name')
+        user.email = request.form.get('email')
+        user.credits = int(request.form.get('credits', user.credits))
+        user.annual_holiday_days = float(request.form.get('annual_holiday_days', user.annual_holiday_days))
+        user.remaining_holiday_days = float(request.form.get('remaining_holiday_days', user.remaining_holiday_days))
+        user.annual_credits = int(request.form.get('annual_credits', user.annual_credits))
+
+        # Se vuoi cambiare password, aggiungi un controllo
+        new_password = request.form.get('password')
+        if new_password:
+            user.password_hash = generate_password_hash(new_password)
+
+        db.session.commit()
+        flash("Dati utente aggiornati con successo!", "success")
+        return redirect(url_for('admin_users'))
+
+    return render_template('edit_user.html', user=user)
+
+
 @app.route('/calendar/<int:year>/<int:month>', methods=['GET', 'POST'])
 @login_required
 def employee_calendar_view(year, month):

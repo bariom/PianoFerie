@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Modifica Utente {{ user.name }}</h1>
+<form method="post">
+    <div class="mb-3">
+        <label for="name" class="form-label">Nome</label>
+        <input type="text" class="form-control" id="name" name="name" value="{{ user.name }}">
+    </div>
+    <div class="mb-3">
+        <label for="email" class="form-label">Email</label>
+        <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
+    </div>
+    <div class="mb-3">
+        <label for="credits" class="form-label">Crediti</label>
+        <input type="number" class="form-control" id="credits" name="credits" value="{{ user.credits }}">
+    </div>
+    <div class="mb-3">
+        <label for="annual_holiday_days" class="form-label">Giorni Ferie Annui</label>
+        <input type="text" class="form-control" id="annual_holiday_days" name="annual_holiday_days" value="{{ user.annual_holiday_days }}">
+    </div>
+    <div class="mb-3">
+        <label for="remaining_holiday_days" class="form-label">Giorni Ferie Restanti</label>
+        <input type="text" class="form-control" id="remaining_holiday_days" name="remaining_holiday_days" value="{{ user.remaining_holiday_days }}">
+    </div>
+    <div class="mb-3">
+        <label for="annual_credits" class="form-label">Crediti Annui</label>
+        <input type="number" class="form-control" id="annual_credits" name="annual_credits" value="{{ user.annual_credits }}">
+    </div>
+    <div class="mb-3">
+        <label for="password" class="form-label">Nuova Password (opzionale)</label>
+        <input type="password" class="form-control" id="password" name="password" placeholder="Lascia vuoto per non cambiare">
+    </div>
+
+    <button type="submit" class="btn btn-success">Salva</button>
+    <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">Annulla</a>
+</form>
+{% endblock %}
