@@ -147,12 +147,16 @@ def admin_dashboard():
         return redirect(url_for('dashboard'))
 
     show_confirmation_modal = request.args.get('confirm', 'false') == 'true'
+    show_process_year_end_modal = request.args.get('process_year_end') == 'true'
     now = datetime.now()
 
     return render_template(
         'admin_dashboard.html',
         now=now,
-        show_confirmation_modal=show_confirmation_modal
+        show_confirmation_modal=show_confirmation_modal,
+        show_process_year_end_modal = show_process_year_end_modal
+
+
     )
 
 
@@ -581,6 +585,34 @@ def delete_rejected_bookings():
     return redirect(url_for('admin_dashboard'))
 
 
+@app.route('/help')
+@login_required
+def help_page():
+    # Verifica che l'utente sia amministratore
+    if not current_user.is_authenticated or not current_user.is_admin:
+        flash("Accesso negato. Solo gli amministratori possono accedere a questa pagina.", "danger")
+        return redirect(url_for('dashboard'))
+
+    return render_template('help.html')
+
+
+@app.route('/admin/process_year_end', methods=['POST'])
+def process_year_end():
+    try:
+        # Aggiorna i saldi per tutti gli utenti non admin
+        users = User.query.filter_by(is_admin=False).all()
+        for user in users:
+            user.remaining_holiday_days += user.annual_holiday_days
+            user.credits += user.annual_credits
+
+        # Salva le modifiche nel database
+        db.session.commit()
+        flash('Saldi trasferiti con successo per tutti gli utenti.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Errore durante il trasferimento dei saldi: {str(e)}', 'danger')
+
+    return redirect(url_for('admin_dashboard'))  # Redirigi alla dashboard admin
 
 
 # Avvio dell'applicazione

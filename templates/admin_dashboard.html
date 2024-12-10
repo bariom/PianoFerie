@@ -3,33 +3,34 @@
 {% block title %}Dashboard Amministratore{% endblock %}
 
 {% block content %}
-<h1>Dashboard Amministratore</h1>
+<h1 class="mb-4">Dashboard Amministratore</h1>
 
-
-<!-- Sezione principale della dashboard -->
-<div class="admin-actions">
+<section class="admin-actions mb-5">
     <h2>Funzioni Amministrative</h2>
-
-    <!-- Link al Calendario Prenotazioni -->
-    <a href="{{ url_for('all_bookings_calendar', year=now.year, month=now.month) }}" class="btn btn-primary">
-        Visualizza Calendario Prenotazioni
-    </a>
-    <a href="{{ url_for('validate_bookings') }}" class="btn btn-primary">Gestisci Prenotazioni</a>
-    <!-- Link per Gestione Costi del Calendario -->
-    <a href="{{ url_for('admin_calendar', year=now.year, month=now.month) }}" class="btn btn-secondary">
-        Gestisci Costi del Calendario
-    </a>
-    <!-- Link per eliminare tutte le prenotazioni rifiutate -->
-    <a href="{{ url_for('admin_dashboard', confirm='true') }}" class="btn btn-danger">
-        Elimina tutte le prenotazioni rifiutate
-    </a>
-</div>
+    <div class="d-flex flex-wrap gap-3">
+        <a href="{{ url_for('all_bookings_calendar', year=now.year, month=now.month) }}" class="btn btn-primary">
+            Visualizza Calendario Prenotazioni
+        </a>
+        <a href="{{ url_for('validate_bookings') }}" class="btn btn-primary">
+            Gestisci Prenotazioni
+        </a>
+        <a href="{{ url_for('admin_calendar', year=now.year, month=now.month) }}" class="btn btn-secondary">
+            Gestisci Costi del Calendario
+        </a>
+        <a href="{{ url_for('admin_dashboard', confirm='true') }}" class="btn btn-danger">
+            Elimina tutte le prenotazioni rifiutate
+        </a>
+        <a href="{{ url_for('admin_dashboard', process_year_end='true') }}" class="btn btn-warning">
+            Trasferimento Saldi
+        </a>
+    </div>
+</section>
 
 <!-- Modale per la conferma di eliminazione -->
 {% if show_confirmation_modal %}
 <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content" style="border: 2px solid #ccc;">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="deleteModalLabel">Conferma Eliminazione</h5>
             </div>
@@ -40,10 +41,7 @@
                 </p>
             </div>
             <div class="modal-footer justify-content-center">
-                <!-- Pulsante "Annulla" con redirect -->
                 <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Annulla</a>
-
-                <!-- Pulsante "Conferma Eliminazione" -->
                 <form method="POST" action="{{ url_for('delete_rejected_bookings') }}">
                     <button type="submit" class="btn btn-danger">Conferma Eliminazione</button>
                 </form>
@@ -52,11 +50,39 @@
     </div>
 </div>
 
-
 <script>
-    // Mostra automaticamente il modale se show_confirmation_modal è True
     var deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
     deleteModal.show();
+</script>
+{% endif %}
+
+<!-- Modale per la conferma del Trasferimento Saldi -->
+{% if show_process_year_end_modal %}
+<div class="modal fade" id="processYearEndModal" tabindex="-1" aria-labelledby="processYearEndLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border: 2px solid #ccc;">
+            <div class="modal-header bg-warning text-black">
+                <h5 class="modal-title" id="processYearEndLabel">Conferma Trasferimento Saldi</h5>
+            </div>
+            <div class="modal-body">
+                <p class="text-center">
+                    Sei sicuro di voler avviare il <strong>Trasferimento Saldi</strong>?<br>
+                    Questa azione non può essere annullata.
+                </p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary">Annulla</a>
+                <form method="POST" action="{{ url_for('process_year_end') }}">
+                    <button type="submit" class="btn btn-warning">Conferma Trasferimento</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    var processYearEndModal = new bootstrap.Modal(document.getElementById('processYearEndModal'));
+    processYearEndModal.show();
 </script>
 {% endif %}
 {% endblock %}

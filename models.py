@@ -12,6 +12,7 @@ class User(db.Model, UserMixin):
     credits = db.Column(db.Integer, default=410)
     annual_holiday_days = db.Column(db.Float, default=33.0)  # Cambiato da Integer a Float
     remaining_holiday_days = db.Column(db.Float, default=33.0)  # Cambiato da Integer a Float
+    annual_credits = db.Column(db.Integer, nullable=True, default=350)
 
 
 class Holiday(db.Model):
