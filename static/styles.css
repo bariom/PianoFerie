@@ -340,6 +340,12 @@ button:hover {
     color: #495057;           /* Grigio scuro */
 }
 
+.btn-xs {
+    padding: 0.1rem 0.3rem;
+    font-size: 0.75rem;
+    line-height: 1;
+}
+
 
 /* ==================================================
    ALERT
@@ -388,4 +394,10 @@ button:hover {
     margin: 5px 0;
     font-weight: bold;
     color: #333;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
 }

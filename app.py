@@ -413,7 +413,7 @@ def all_bookings_calendar(year, month):
     from calendar import Calendar
 
     # Verifica che l'utente sia amministratore
-    if not current_user.is_authenticated or not current_user.is_admin:
+    if not current_user.is_authenticated:    # commentato: or not current_user.is_admin:
         flash("Accesso non autorizzato.", "danger")
         return redirect(url_for('dashboard'))
 
@@ -455,6 +455,7 @@ def all_bookings_calendar(year, month):
             bookings_by_date[holiday.date] = []
 
         bookings_by_date[holiday.date].append({
+            'id': booking.id,
             'user_name': user.name,
             'is_half_day': booking.is_half_day,
             'session': booking.session,
@@ -548,29 +549,10 @@ def validate_bookings():
         flash("Accesso non autorizzato.", "danger")
         return redirect(url_for('dashboard'))
 
-    # Ottenere tutte le prenotazioni non validate e non rifiutate
-    bookings = Booking.query.filter_by(is_validated=False, is_rejected=False).all()
-
-    # Prepara i dati per il template
-    booking_data = [
-        {
-            'id': booking.id,
-            'user_name': User.query.get(booking.user_id).name,
-            'holiday_date': Holiday.query.get(booking.holiday_id).date.strftime('%Y-%m-%d'),
-            'holiday_cost': Holiday.query.get(booking.holiday_id).cost / 2 if booking.is_half_day else Holiday.query.get(booking.holiday_id).cost,
-            'is_half_day': booking.is_half_day,
-            'session': (
-                'Mattino' if booking.is_half_day and booking.session == 'morning' else
-                'Pomeriggio' if booking.is_half_day and booking.session == 'afternoon' else
-                'Intera giornata'
-            )
-        }
-        for booking in bookings
-    ]
-
     if request.method == 'POST':
         booking_id = request.form.get('booking_id')
         action = request.form.get('action')
+        next_page = request.form.get('next', None)
 
         booking = Booking.query.get(booking_id)
         if not booking:
@@ -584,8 +566,8 @@ def validate_bookings():
 
         elif action == "reject":
             # Ripristina il saldo ferie e crediti
-            user = User.query.get(booking.user_id)
-            holiday = Holiday.query.get(booking.holiday_id)
+            user = booking.user
+            holiday = booking.holiday
 
             if booking.is_half_day:
                 user.credits += holiday.cost / 2
@@ -600,9 +582,48 @@ def validate_bookings():
             flash("Prenotazione rifiutata con successo.", "success")
 
         db.session.commit()
-        return redirect(url_for('validate_bookings'))
 
-    return render_template('validate_bookings.html', bookings=booking_data)
+        # Se `next_page` è presente, redirigi lì, altrimenti vai alla pagina di default
+        if next_page:
+            return redirect(next_page)
+        else:
+            return redirect(url_for('validate_bookings'))
+
+    # GET request: Applichiamo la paginazione
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    pagination = Booking.query \
+        .options(joinedload(Booking.user), joinedload(Booking.holiday)) \
+        .filter_by(is_validated=False, is_rejected=False) \
+        .paginate(page=page, per_page=per_page, error_out=False)
+
+    # Ottieni i bookings della pagina corrente
+    bookings = pagination.items
+
+    # Prepara i dati per il template senza query aggiuntive
+    booking_data = [
+        {
+            'id': booking.id,
+            'user_name': booking.user.name,
+            'holiday_date': booking.holiday.date.strftime('%Y-%m-%d'),
+            'holiday_cost': booking.is_half_day and booking.holiday.cost / 2 or booking.holiday.cost,
+            'is_half_day': booking.is_half_day,
+            'session': (
+                'Mattino' if booking.is_half_day and booking.session == 'morning' else
+                'Pomeriggio' if booking.is_half_day and booking.session == 'afternoon' else
+                'Intera giornata'
+            )
+        }
+        for booking in bookings
+    ]
+
+    return render_template(
+        'validate_bookings.html',
+        bookings=booking_data,
+        pagination=pagination
+    )
+
 
 
 @app.route('/delete-rejected-bookings', methods=['POST'])

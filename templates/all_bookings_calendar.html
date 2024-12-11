@@ -66,6 +66,22 @@
                                             {% if booking.is_half_day %}
                                                 ({{ 'AM' if booking.session == 'morning' else 'PM' }})
                                             {% endif %}
+
+                                            <!-- Se l'utente è admin e la prenotazione è né validata né rifiutata -->
+                                            {% if current_user.is_admin and not booking.is_validated and not booking.is_rejected %}
+                                                <form method="POST" action="{{ url_for('validate_bookings') }}" style="display:inline;">
+                                                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                                                    <input type="hidden" name="action" value="validate">
+                                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                                    <button type="submit" class="btn btn-success btn-sm btn-xs">Valida</button>
+                                                </form>
+                                                <form method="POST" action="{{ url_for('validate_bookings') }}" style="display:inline;">
+                                                    <input type="hidden" name="booking_id" value="{{ booking.id }}">
+                                                    <input type="hidden" name="action" value="reject">
+                                                    <input type="hidden" name="next" value="{{ request.path }}">
+                                                    <button type="submit" class="btn btn-danger btn-sm btn-xs">Rifiuta</button>
+                                                </form>
+                                            {% endif %}
                                         </li>
                                     {% endfor %}
                                 </ul>
