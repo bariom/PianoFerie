@@ -5,6 +5,23 @@
 {% block content %}
 <h1>Calendario - {{ month_name|capitalize }} {{ year }}</h1>
 
+<!-- Help Icon -->
+<div class="help-section">
+    <button class="help-icon" onclick="toggleHelp()">❓</button>
+</div>
+<div id="help-content" class="help-content" style="display: none;">
+    <h4>Come utilizzare il calendario:</h4>
+    <ul>
+        <li>Seleziona le date disponibili cliccando sulle caselle del calendario.</li>
+        <li>Esegui la prenotazione per i giorni del mese in cui ti trovi prima di spostarti ad un altro mese.</li>
+        <li>Ogni data mostra il costo in crediti necessari per prenotare.</li>
+        <li>Puoi prenotare mezze giornate (AM o PM) se disponibili.</li>
+        <li>I giorni festivi e i fine settimana non sono prenotabili.</li>
+        <li>Le prenotazioni già effettuate mostrano il loro stato: <strong>In attesa</strong>, <strong>Validata</strong>, o <strong>Rifiutata</strong>.</li>
+    </ul>
+</div>
+
+<!-- Informazioni sul saldo -->
 <div class="balance-info">
     <h4>Il tuo saldo:</h4>
     <p><strong>Crediti disponibili:</strong> {{ credits }}</p>
@@ -119,5 +136,12 @@
         <button type="submit" class="btn btn-primary">Prenota</button>
     </div>
 </form>
+
+<script>
+    function toggleHelp() {
+        const helpContent = document.getElementById('help-content');
+        helpContent.style.display = helpContent.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
 
 {% endblock %}

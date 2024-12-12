@@ -14,6 +14,14 @@ import locale
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Configura SQLAlchemy per ripristinare connessioni perse
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,  # Controlla che la connessione sia attiva prima di riutilizzarla
+    'pool_size': 5,         # Numero di connessioni nel pool
+    'max_overflow': 10,     # Connessioni extra se il pool è pieno
+    'pool_timeout': 30      # Timeout prima di dichiarare un errore
+}
+
 # Inizializza database e migrazioni
 db.init_app(app)
 migrate.init_app(app, db)
@@ -33,6 +41,23 @@ from models import User, Holiday, Booking
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
+
+INACTIVITY_TIMEOUT = 5 * 60
+@app.before_request
+def check_inactivity():
+    if current_user.is_authenticated:
+        now = datetime.utcnow().timestamp()
+        last_activity = session.get('last_activity')
+
+        if last_activity is not None:
+            elapsed = now - last_activity
+            if elapsed > INACTIVITY_TIMEOUT:
+                logout_user()
+                flash("Sei stato scollegato per inattività.", "info")
+                return redirect(url_for('login'))
+
+        # Imposta o aggiorna l'ultimo timestamp di attività
+        session['last_activity'] = now
 
 
 # Route Homepage
@@ -79,6 +104,7 @@ def login():
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
+            session['last_activity'] = datetime.utcnow().timestamp()
             flash('Login effettuato con successo!', 'success')
             return redirect(url_for('admin_dashboard') if user.is_admin else url_for('dashboard'))
         else:

@@ -401,3 +401,39 @@ button:hover {
     justify-content: center;
     flex-wrap: wrap;
 }
+
+
+/* Stile per il bottone Help Icon */
+.help-section {
+    display: flex;
+    justify-content: flex-end; /* Allinea il contenuto a destra */
+    margin-bottom: 10px; /* Aggiungi spazio sotto la sezione */
+}
+
+.help-icon {
+    background-color: transparent; /* Sfondo trasparente */
+    border: none; /* Nessun bordo */
+    color: #007bff; /* Colore del testo */
+    font-size: 12px; /* Dimensione icona */
+    width: 24px; /* Altezza e larghezza fisse */
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%; /* Forma rotonda */
+    transition: background-color 0.3s, color 0.3s;
+    cursor: pointer; /* Cursore a mano */
+}
+
+.help-icon:hover {
+    background-color: #e9ecef; /* Colore di sfondo al passaggio */
+    color: #0056b3; /* Colore del testo al passaggio */
+}
+
+.help-content {
+    margin-top: 10px; /* Spazio sopra il contenuto dell'help */
+    border: 1px solid #ddd; /* Bordo del contenuto */
+    padding: 10px;
+    background-color: #f9f9f9; /* Sfondo del contenuto */
+    border-radius: 5px;
+}

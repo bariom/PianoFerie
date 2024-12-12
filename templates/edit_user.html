@@ -11,20 +11,20 @@
         <input type="email" class="form-control" id="email" name="email" value="{{ user.email }}">
     </div>
     <div class="mb-3">
-        <label for="credits" class="form-label">Crediti</label>
-        <input type="number" class="form-control" id="credits" name="credits" value="{{ user.credits }}">
+        <label for="annual_credits" class="form-label">Crediti Annui</label>
+        <input type="number" class="form-control" id="annual_credits" name="annual_credits" value="{{ user.annual_credits }}">
     </div>
     <div class="mb-3">
         <label for="annual_holiday_days" class="form-label">Giorni Ferie Annui</label>
         <input type="text" class="form-control" id="annual_holiday_days" name="annual_holiday_days" value="{{ user.annual_holiday_days }}">
     </div>
+        <div class="mb-3">
+        <label for="credits" class="form-label">Crediti Residui</label>
+        <input type="number" class="form-control" id="credits" name="credits" value="{{ user.credits }}">
+    </div>
     <div class="mb-3">
         <label for="remaining_holiday_days" class="form-label">Giorni Ferie Restanti</label>
         <input type="text" class="form-control" id="remaining_holiday_days" name="remaining_holiday_days" value="{{ user.remaining_holiday_days }}">
-    </div>
-    <div class="mb-3">
-        <label for="annual_credits" class="form-label">Crediti Annui</label>
-        <input type="number" class="form-control" id="annual_credits" name="annual_credits" value="{{ user.annual_credits }}">
     </div>
     <div class="mb-3">
         <label for="password" class="form-label">Nuova Password (opzionale)</label>

@@ -8,10 +8,10 @@
             <th>Nome</th>
             <th>Email</th>
             <th>Admin</th>
-            <th>Crediti</th>
-            <th>Giorni Ferie Annui</th>
-            <th>Giorni Ferie Restanti</th>
             <th>Crediti Annui</th>
+            <th>Giorni Ferie Annui</th>
+            <th>Crediti Restanti</th>
+            <th>Giorni Ferie Restanti</th>
             <th>Azione</th>
         </tr>
     </thead>
@@ -22,10 +22,11 @@
             <td>{{ usr.name }}</td>
             <td>{{ usr.email }}</td>
             <td>{{ 'Sì' if usr.is_admin else 'No' }}</td>
-            <td>{{ usr.credits }}</td>
-            <td>{{ usr.annual_holiday_days }}</td>
-            <td>{{ usr.remaining_holiday_days }}</td>
             <td>{{ usr.annual_credits }}</td>
+            <td>{{ usr.annual_holiday_days }}</td>
+            <td>{{ usr.credits }}</td>
+            <td>{{ usr.remaining_holiday_days }}</td>
+
             <td>
                 <a href="{{ url_for('edit_user', user_id=usr.id) }}" class="btn btn-sm btn-primary">Modifica</a>
             </td>
